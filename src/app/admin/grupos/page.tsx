@@ -252,6 +252,25 @@ export default function TourGroupsPage() {
         }
     }
 
+    const handleUpdateGroupName = async (name: string) => {
+        if (!selectedGroup || !name.trim() || name === selectedGroup.group_name) return
+
+        try {
+            const { error } = await supabase
+                .from('tour_groups')
+                .update({ group_name: name.trim() })
+                .eq('id', selectedGroup.id)
+
+            if (error) throw error
+
+            setSelectedGroup({ ...selectedGroup, group_name: name.trim() })
+            await loadData()
+        } catch (err) {
+            console.error(err)
+            alert('Error al actualizar nombre del grupo')
+        }
+    }
+
     const handleDeleteGroup = async (groupId: string) => {
         if (!confirm('¿Estás seguro de eliminar este grupo?')) return
 
@@ -431,9 +450,19 @@ export default function TourGroupsPage() {
                     <div>
                         {selectedGroup ? (
                             <>
+
                                 <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px', marginBottom: '1rem' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                        <h2 style={{ fontWeight: '600', margin: 0 }}>{selectedGroup.group_name}</h2>
+                                        <div style={{ flex: 1, marginRight: '1rem' }}>
+                                            <input
+                                                type="text"
+                                                className="form-input"
+                                                style={{ fontSize: '1.5rem', fontWeight: '600', padding: '0.25rem 0.5rem' }}
+                                                defaultValue={selectedGroup.group_name}
+                                                key={selectedGroup.id}
+                                                onBlur={(e) => handleUpdateGroupName(e.target.value)}
+                                            />
+                                        </div>
                                         <span style={{
                                             padding: '0.25rem 0.75rem',
                                             borderRadius: '20px',
