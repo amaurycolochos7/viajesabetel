@@ -174,89 +174,81 @@ export default function MiGrupoPage() {
 
                 {searched && passengers.length > 0 && (
                     <div style={{ marginTop: '1.5rem' }}>
-                        {passengers.map((passenger, idx) => (
-                            <div key={idx} className="card" style={{ marginBottom: '1rem' }}>
-                                <div style={{
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    marginBottom: '1rem'
-                                }}>
-                                    <div>
-                                        <div style={{ fontWeight: '600', fontSize: '1.1rem' }}>
-                                            {passenger.first_name} {passenger.last_name}
-                                        </div>
-                                        <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                            {passenger.reservation_code}
-                                        </div>
-                                    </div>
-                                </div>
+                        {/* Group passengers by assignment to avoid repeating the group card */}
+                        {Array.from(new Set(passengers.map(p => p.group?.group_name || 'Sin grupo')))
+                            .map((groupName) => {
+                                // Find all passengers in this "grouping" (sharing same assigned group, or all unassigned)
+                                const groupPassengers = passengers.filter(p => (p.group?.group_name || 'Sin grupo') === groupName)
+                                const firstPassenger = groupPassengers[0]
+                                const groupInfo = firstPassenger.group
 
-                                {passenger.group ? (
-                                    <div style={{
-                                        background: '#e8f5e9',
-                                        padding: '1rem',
-                                        borderRadius: '6px',
-                                        border: '1px solid #c8e6c9'
-                                    }}>
-                                        <div style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            marginBottom: '0.75rem'
-                                        }}>
-                                            <span style={{ fontWeight: '600', color: '#2e7d32' }}>
-                                                {passenger.group.group_name}
-                                            </span>
-                                            {passenger.group.tour_datetime && (
-                                                <span style={{
-                                                    background: 'var(--primary)',
-                                                    color: 'white',
-                                                    padding: '0.25rem 0.75rem',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.85rem',
-                                                    fontWeight: '600'
-                                                }}>
-                                                    {new Date(passenger.group.tour_datetime).toLocaleString('es-MX', {
-                                                        weekday: 'short',
-                                                        day: 'numeric',
-                                                        month: 'short',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit'
-                                                    })}
-                                                </span>
-                                            )}
-                                        </div>
+                                if (groupInfo) {
+                                    // Case: Assigned Group
+                                    return (
+                                        <div key={groupName} className="card" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #2e7d32' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                <h3 style={{ margin: 0, color: '#2e7d32' }}>{groupInfo.group_name}</h3>
+                                                {groupInfo.tour_datetime && (
+                                                    <span style={{
+                                                        background: 'var(--primary)',
+                                                        color: 'white',
+                                                        padding: '0.25rem 0.75rem',
+                                                        borderRadius: '20px',
+                                                        fontSize: '0.85rem',
+                                                        fontWeight: '600'
+                                                    }}>
+                                                        {new Date(groupInfo.tour_datetime).toLocaleString('es-MX', {
+                                                            weekday: 'short',
+                                                            day: 'numeric',
+                                                            month: 'short',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </span>
+                                                )}
+                                            </div>
 
-                                        <div style={{ fontSize: '0.9rem', color: '#555' }}>
-                                            <strong>Integrantes del grupo:</strong>
-                                            <ol style={{ margin: '0.5rem 0 0 1.25rem', padding: 0 }}>
-                                                {passenger.group.members.map((member, mIdx) => (
-                                                    <li key={mIdx} style={{ marginBottom: '0.25rem' }}>
-                                                        {member.first_name} {member.last_name}
-                                                    </li>
-                                                ))}
-                                            </ol>
+                                            <div style={{ marginBottom: '1rem' }}>
+                                                <strong>Tus viajeros en este grupo:</strong>
+                                                <ul style={{ margin: '0.5rem 0 1rem 1.25rem', padding: 0 }}>
+                                                    {groupPassengers.map((p, i) => (
+                                                        <li key={i}>{p.first_name} {p.last_name}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+
+                                            <div style={{ background: '#f1f8e9', padding: '1rem', borderRadius: '6px' }}>
+                                                <strong style={{ display: 'block', marginBottom: '0.5rem', color: '#33691e' }}>
+                                                    Lista completa del grupo ({groupInfo.members.length} personas):
+                                                </strong>
+                                                <ol style={{ margin: '0 0 0 1.25rem', padding: 0, color: '#555' }}>
+                                                    {groupInfo.members.map((m, i) => (
+                                                        <li key={i}>{m.first_name} {m.last_name}</li>
+                                                    ))}
+                                                </ol>
+                                            </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div style={{
-                                        background: '#fff3e0',
-                                        padding: '1rem',
-                                        borderRadius: '6px',
-                                        border: '1px solid #ffe0b2',
-                                        color: '#e65100',
-                                        textAlign: 'center'
-                                    }}>
-                                        Aún no ha sido asignado a un grupo de tour.
-                                        <br />
-                                        <span style={{ fontSize: '0.85rem' }}>
-                                            Se te notificará cuando tu grupo esté listo.
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                                    )
+                                } else {
+                                    // Case: Unassigned passengers
+                                    return (
+                                        <div key="unassigned" className="card" style={{ marginBottom: '1.5rem', borderLeft: '4px solid #f57c00' }}>
+                                            <h3 style={{ margin: '0 0 1rem 0', color: '#f57c00' }}>Pendientes de asignación</h3>
+                                            <div style={{ background: '#fff3e0', padding: '1rem', borderRadius: '6px', color: '#e65100' }}>
+                                                <p style={{ margin: '0 0 0.5rem 0' }}>
+                                                    Los siguientes viajeros aún no tienen grupo asignado:
+                                                </p>
+                                                <ul style={{ margin: '0 0 0.5rem 1.25rem', padding: 0 }}>
+                                                    {groupPassengers.map((p, i) => (
+                                                        <li key={i} style={{ fontWeight: '600' }}>{p.first_name} {p.last_name}</li>
+                                                    ))}
+                                                </ul>
+                                                <small>Se te notificará cuando sean asignados.</small>
+                                            </div>
+                                        </div>
+                                    )
+                                }
+                            })}
                     </div>
                 )}
 

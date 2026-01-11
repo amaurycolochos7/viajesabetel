@@ -515,41 +515,64 @@ export default function TourGroupsPage() {
                                     )}
                                 </div>
 
-                                {/* Add passengers */}
+                                {/* Add passengers grouped by reservation */}
                                 {groupMembers.length < selectedGroup.max_members && eligiblePassengers.length > 0 && (
                                     <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px' }}>
                                         <h3 style={{ fontWeight: '600', marginBottom: '1rem' }}>
                                             Pasajeros disponibles ({eligiblePassengers.length})
                                         </h3>
                                         <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                                            Solo se muestran pasajeros con anticipo o pago completo.
+                                            Agrupados por reservación. Selecciona para asignar.
                                         </p>
-                                        <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '1rem' }}>
-                                            {eligiblePassengers.map(passenger => (
-                                                <label
-                                                    key={passenger.id}
-                                                    style={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.5rem',
-                                                        padding: '0.5rem',
-                                                        cursor: 'pointer',
+                                        <div style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '1rem' }}>
+                                            {Object.entries(
+                                                eligiblePassengers.reduce((acc, p) => {
+                                                    const code = p.reservation_code
+                                                    if (!acc[code]) acc[code] = []
+                                                    acc[code].push(p)
+                                                    return acc
+                                                }, {} as Record<string, EligiblePassenger[]>)
+                                            ).map(([code, passengers]) => (
+                                                <div key={code} style={{ marginBottom: '1rem', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }}>
+                                                    <div style={{
+                                                        background: '#f8f9fa',
+                                                        padding: '0.5rem 0.75rem',
+                                                        fontSize: '0.85rem',
+                                                        fontWeight: '600',
+                                                        color: '#555',
                                                         borderBottom: '1px solid #eee'
-                                                    }}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedPassengers.includes(passenger.id)}
-                                                        onChange={() => handleTogglePassenger(passenger.id)}
-                                                    />
-                                                    <div>
-                                                        <div>{passenger.first_name} {passenger.last_name}</div>
-                                                        <div style={{ fontSize: '0.8rem', color: '#666' }}>
-                                                            {passenger.reservation_code}
-                                                            {passenger.congregation && ` — ${passenger.congregation}`}
-                                                        </div>
+                                                    }}>
+                                                        Reserva: {code} ({passengers.length})
                                                     </div>
-                                                </label>
+                                                    {passengers.map(passenger => (
+                                                        <label
+                                                            key={passenger.id}
+                                                            style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.5rem',
+                                                                padding: '0.5rem 0.75rem',
+                                                                cursor: 'pointer',
+                                                                borderBottom: '1px solid #eee',
+                                                                background: selectedPassengers.includes(passenger.id) ? '#e3f2fd' : 'white'
+                                                            }}
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedPassengers.includes(passenger.id)}
+                                                                onChange={() => handleTogglePassenger(passenger.id)}
+                                                            />
+                                                            <div>
+                                                                <div>{passenger.first_name} {passenger.last_name}</div>
+                                                                {passenger.congregation && (
+                                                                    <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                                                                        {passenger.congregation}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </label>
+                                                    ))}
+                                                </div>
                                             ))}
                                         </div>
                                         <button
