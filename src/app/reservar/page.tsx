@@ -537,7 +537,7 @@ export default function ReservarPage() {
                             </div>
                         </div>
 
-                        <h3 className="section-title">¿Cómo deseas pagar?</h3>
+                        <h3 className="section-title">¿Cuánto deseas pagar?</h3>
 
                         <div style={{ marginBottom: '1.5rem' }}>
                             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', cursor: 'pointer' }}>
