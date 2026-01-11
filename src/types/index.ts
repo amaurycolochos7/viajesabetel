@@ -1,0 +1,56 @@
+export interface Passenger {
+    first_name: string
+    last_name: string
+    phone?: string
+    congregation?: string
+    age?: number
+    observations?: string
+}
+
+export interface ReservationData {
+    responsible_name: string
+    responsible_phone: string
+    responsible_congregation?: string
+    passengers: Passenger[]
+}
+
+export interface Reservation {
+    id: string
+    reservation_code: string
+    responsible_name: string
+    responsible_phone: string
+    responsible_congregation?: string
+    seats_total: number
+    seats_payable: number
+    unit_price: number
+    total_amount: number
+    deposit_required: number
+    amount_paid: number
+    status: 'pendiente' | 'anticipo_pagado' | 'pagado_completo' | 'cancelado'
+    seat_order?: number
+    pay_by_date?: string
+    created_at: string
+}
+
+export interface ReservationPassenger {
+    id: string
+    reservation_id: string
+    first_name: string
+    last_name: string
+    phone?: string
+    congregation?: string
+    age?: number
+    is_free_under6: boolean
+    observations?: string
+    created_at: string
+}
+
+export interface Payment {
+    id: string
+    reservation_id: string
+    amount: number
+    paid_at: string
+    method: string
+    reference?: string
+    note?: string
+}
