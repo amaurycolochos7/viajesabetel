@@ -17,6 +17,7 @@ export interface ReservationData {
 export interface Reservation {
     id: string
     reservation_code: string
+    boarding_access_code?: string
     responsible_name: string
     responsible_phone: string
     responsible_congregation?: string
@@ -42,6 +43,8 @@ export interface ReservationPassenger {
     age?: number
     is_free_under6: boolean
     observations?: string
+    boarded?: boolean
+    seat_number?: string
     created_at: string
 }
 

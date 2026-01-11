@@ -145,6 +145,24 @@ export default function ReservacionDetailPage() {
         }
     }
 
+    const handleSeatChange = async (passengerId: string, newSeat: string) => {
+        try {
+            const { error } = await supabase
+                .from('reservation_passengers')
+                .update({ seat_number: newSeat })
+                .eq('id', passengerId)
+
+            if (error) throw error
+
+            setPassengers(prev => prev.map(p =>
+                p.id === passengerId ? { ...p, seat_number: newSeat } : p
+            ))
+        } catch (err) {
+            console.error(err)
+            alert('Error al asignar el asiento')
+        }
+    }
+
     const getStatusLabel = (status: string) => {
         const labels: Record<string, string> = {
             pendiente: 'Pendiente',
@@ -363,6 +381,12 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                                     {reservation.seats_payable} pagan / {reservation.seats_total} total
                                 </div>
                             </div>
+                            <div>
+                                <div style={{ color: '#666', fontSize: '0.85rem' }}>Código de abordaje</div>
+                                <div style={{ fontWeight: '700', fontSize: '1.25rem', color: '#e67e22', fontFamily: 'monospace' }}>
+                                    {reservation.boarding_access_code || '—'}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -388,21 +412,44 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                                             <span style={{ color: '#666' }}> — {passenger.congregation}</span>
                                         )}
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        {passenger.age !== null && passenger.age !== undefined && (
-                                            <span style={{ fontSize: '0.85rem', color: '#666' }}>{passenger.age} años</span>
-                                        )}
-                                        {passenger.is_free_under6 && (
-                                            <span style={{
-                                                background: '#e8f5e9',
-                                                color: '#2e7d32',
-                                                padding: '0.2rem 0.5rem',
-                                                borderRadius: '3px',
-                                                fontSize: '0.7rem',
-                                                fontWeight: '600'
-                                            }}>
-                                                Gratis
-                                            </span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            {passenger.age !== null && passenger.age !== undefined && (
+                                                <span style={{ fontSize: '0.85rem', color: '#666' }}>{passenger.age} años</span>
+                                            )}
+                                            {passenger.is_free_under6 && (
+                                                <span style={{
+                                                    background: '#e8f5e9',
+                                                    color: '#2e7d32',
+                                                    padding: '0.2rem 0.5rem',
+                                                    borderRadius: '3px',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    Gratis
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Seat Assignment - Only if deposit paid */}
+                                        {['anticipo_pagado', 'pagado_completo'].includes(reservation.status) && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderLeft: '1px solid #ddd', paddingLeft: '1rem' }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#666' }}>Asiento:</span>
+                                                <input
+                                                    type="text"
+                                                    value={passenger.seat_number || ''}
+                                                    onChange={(e) => handleSeatChange(passenger.id, e.target.value)}
+                                                    placeholder="#"
+                                                    style={{
+                                                        width: '50px',
+                                                        padding: '0.25rem',
+                                                        border: '1px solid #ccc',
+                                                        borderRadius: '4px',
+                                                        textAlign: 'center',
+                                                        fontWeight: 'bold'
+                                                    }}
+                                                />
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -633,7 +680,7 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                         </div>
                     </div>
                 </div>
-            </main>
-        </div>
+            </main >
+        </div >
     )
 }

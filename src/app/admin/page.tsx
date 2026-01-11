@@ -196,6 +196,13 @@ export default function AdminDashboard() {
                     >
                         Grupos de tour
                     </Link>
+                    <Link
+                        href="/admin/abordaje"
+                        className="nav-button"
+                        style={{ textDecoration: 'none', background: '#2e7d32', color: 'white' }}
+                    >
+                        Control de Abordaje
+                    </Link>
                 </div>
 
                 {/* Recent Reservations */}

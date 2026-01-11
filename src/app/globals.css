@@ -545,13 +545,6 @@ h6 {
     height: 220px;
   }
 
-  .cta-button {
-    width: calc(100% - 2rem);
-    left: 1rem;
-    right: 1rem;
-    transform: none;
-  }
-
   .card {
     padding: 1.25rem;
   }

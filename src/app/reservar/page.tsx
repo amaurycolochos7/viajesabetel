@@ -12,6 +12,7 @@ type PaymentMethod = 'card' | 'transfer' | null
 
 interface ReservationResult {
     reservation_code: string
+    boarding_access_code?: string
     seats_total: number
     seats_payable: number
     total_amount: number
@@ -35,7 +36,7 @@ export default function ReservarPage() {
 
     const totalSeats = adultsCount + childrenCount
     const seatsPayable = adultsCount
-    const totalAmount = seatsPayable * 1700
+    const totalAmount = seatsPayable * 1800
     const depositRequired = totalAmount * 0.5
 
     // Solo permite números y máximo 10 dígitos
@@ -202,7 +203,8 @@ export default function ReservarPage() {
             }
         } catch (err) {
             console.error(err)
-            setError('Error al conectar con Mercado Pago. Intenta con transferencia.')
+            const msg = err instanceof Error ? err.message : 'Error al conectar con Mercado Pago'
+            setError(msg)
             setIsLoading(false)
         }
     }
@@ -259,9 +261,15 @@ export default function ReservarPage() {
                     <p style={{ color: '#666' }}>7-9 de Abril 2026</p>
                 </div>
 
-                {step !== 'seats' && step !== 'confirmation' && (
+                {step !== 'seats' && (step !== 'confirmation' || paymentMethod === 'transfer') && (
                     <button
-                        onClick={() => setStep(step === 'passengers' ? 'seats' : step === 'summary' ? 'passengers' : step === 'payment' ? 'summary' : 'seats')}
+                        onClick={() => {
+                            if (step === 'confirmation') {
+                                setStep('payment')
+                            } else {
+                                setStep(step === 'passengers' ? 'seats' : step === 'summary' ? 'passengers' : step === 'payment' ? 'summary' : 'seats')
+                            }
+                        }}
                         style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}
                     >
                         ← Volver
@@ -373,7 +381,7 @@ export default function ReservarPage() {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Congregación (Opcional)</label>
+                            <label className="form-label">Congregación *</label>
                             <input
                                 type="text"
                                 className="form-input"
@@ -384,10 +392,22 @@ export default function ReservarPage() {
                         </div>
 
                         <button
-                            onClick={initPassengers}
+                            onClick={() => {
+                                const missing = []
+                                if (!responsibleName) missing.push('Nombre')
+                                if (!responsibleLastName) missing.push('Apellido')
+                                if (!isPhoneValid) missing.push('Teléfono válido (10 dígitos)')
+                                if (!responsibleCongregation) missing.push('Congregación')
+
+                                if (missing.length > 0) {
+                                    alert(`Por favor completa los siguientes campos para continuar:\n- ${missing.join('\n- ')}`)
+                                    return
+                                }
+
+                                initPassengers()
+                            }}
                             className="cta-button"
                             style={{ width: '100%', marginTop: '1rem' }}
-                            disabled={!responsibleName || !responsibleLastName || !isPhoneValid}
                         >
                             Continuar
                         </button>
@@ -449,8 +469,15 @@ export default function ReservarPage() {
                         <button
                             className="cta-button"
                             style={{ width: '100%' }}
-                            onClick={() => setStep('summary')} // Go to summary instead of create directly? Original went to summary.
-                            disabled={isLoading || passengers.slice(1).some(p => !p.first_name || !p.last_name)}
+                            onClick={() => {
+                                const hasEmptyFields = passengers.slice(1).some(p => !p.first_name || !p.last_name)
+                                if (hasEmptyFields) {
+                                    alert('Por favor completa los nombres y apellidos de todos los viajeros extra.')
+                                    return
+                                }
+                                setStep('summary')
+                            }}
+                            disabled={isLoading}
                         >
                             Continuar
                         </button>
@@ -486,60 +513,93 @@ export default function ReservarPage() {
                 {/* STEP 4: Payment */}
                 {step === 'payment' && result && (
                     <div className="fade-in">
-                        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Método de pago</h2>
+                        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', fontWeight: 'bold', color: '#1a1a1a' }}>Método de pago</h2>
 
-                        <div style={{ background: '#f0f7ff', padding: '1.5rem', borderRadius: '8px', marginBottom: '2rem' }}>
-                            <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Tu reservación está lista</h3>
-                            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)', marginBottom: '0.5rem', letterSpacing: '1px' }}>
-                                {result.reservation_code}
+                        <div style={{ background: '#fff', border: '1px solid #e0e0e0', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div>
+                                    <h3 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Reservación</h3>
+                                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)', letterSpacing: '1px', fontFamily: 'monospace' }}>
+                                        {result.reservation_code}
+                                    </div>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                    <div style={{ fontSize: '0.9rem', color: '#666' }}>Total</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#333' }}>${totalAmount.toLocaleString('es-MX')}</div>
+                                </div>
                             </div>
-                            <p>Total a pagar: <strong>${totalAmount.toLocaleString('es-MX')}</strong></p>
                         </div>
 
                         <div style={{ marginBottom: '2rem' }}>
-                            <label className="form-label" style={{ marginBottom: '1rem', display: 'block' }}>¿Cuánto deseas pagar?</label>
+                            <label className="form-label" style={{ marginBottom: '1rem', display: 'block', fontWeight: '600' }}>¿Cuánto deseas pagar hoy?</label>
                             <div style={{ display: 'grid', gap: '1rem' }}>
+                                {/* Option 1: Deposit */}
                                 <label style={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '1rem',
-                                    padding: '1rem',
-                                    border: isDeposit ? '2px solid var(--primary)' : '1px solid #ddd',
-                                    borderRadius: '8px',
+                                    padding: '1.25rem',
+                                    border: isDeposit ? '2px solid var(--primary)' : '1px solid #e0e0e0',
+                                    borderRadius: '12px',
                                     cursor: 'pointer',
-                                    background: isDeposit ? '#f0f7ff' : 'white'
+                                    background: isDeposit ? '#f0f7ff' : 'white',
+                                    transition: 'all 0.2s ease',
+                                    boxShadow: isDeposit ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
                                 }}>
+                                    <div style={{
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        width: '24px', height: '24px', borderRadius: '50%',
+                                        border: isDeposit ? '6px solid var(--primary)' : '2px solid #ccc',
+                                        background: 'white'
+                                    }}></div>
                                     <input
                                         type="radio"
                                         name="paymentType"
                                         checked={isDeposit}
                                         onChange={() => setIsDeposit(true)}
+                                        style={{ display: 'none' }}
                                     />
-                                    <div>
-                                        <div style={{ fontWeight: '600' }}>Anticipo 50%</div>
-                                        <div>${result.deposit_required.toLocaleString('es-MX')}</div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: '600', fontSize: '1.1rem', color: isDeposit ? 'var(--primary-dark)' : 'inherit' }}>Pagar Anticipo (50%)</div>
+                                        <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.2rem' }}>Liquidas antes del viaje</div>
+                                    </div>
+                                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: isDeposit ? 'var(--primary)' : '#333' }}>
+                                        ${result.deposit_required.toLocaleString('es-MX')}
                                     </div>
                                 </label>
 
+                                {/* Option 2: Full Payment */}
                                 <label style={{
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: '1rem',
-                                    padding: '1rem',
-                                    border: !isDeposit ? '2px solid var(--primary)' : '1px solid #ddd',
-                                    borderRadius: '8px',
+                                    padding: '1.25rem',
+                                    border: !isDeposit ? '2px solid var(--primary)' : '1px solid #e0e0e0',
+                                    borderRadius: '12px',
                                     cursor: 'pointer',
-                                    background: !isDeposit ? '#f0f7ff' : 'white'
+                                    background: !isDeposit ? '#f0f7ff' : 'white',
+                                    transition: 'all 0.2s ease',
+                                    boxShadow: !isDeposit ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
                                 }}>
+                                    <div style={{
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        width: '24px', height: '24px', borderRadius: '50%',
+                                        border: !isDeposit ? '6px solid var(--primary)' : '2px solid #ccc',
+                                        background: 'white'
+                                    }}></div>
                                     <input
                                         type="radio"
                                         name="paymentType"
                                         checked={!isDeposit}
                                         onChange={() => setIsDeposit(false)}
+                                        style={{ display: 'none' }}
                                     />
-                                    <div>
-                                        <div style={{ fontWeight: '600' }}>Pago completo</div>
-                                        <div>${result.total_amount.toLocaleString('es-MX')}</div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: '600', fontSize: '1.1rem', color: !isDeposit ? 'var(--primary-dark)' : 'inherit' }}>Pagar Completo (100%)</div>
+                                        <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.2rem' }}>¡Dejas todo listo!</div>
+                                    </div>
+                                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: !isDeposit ? 'var(--primary)' : '#333' }}>
+                                        ${result.total_amount.toLocaleString('es-MX')}
                                     </div>
                                 </label>
                             </div>
@@ -552,59 +612,128 @@ export default function ReservarPage() {
                                     handlePayWithCard()
                                 }}
                                 className="cta-button"
-                                style={{ background: '#009ee3' }}
+                                style={{
+                                    background: 'linear-gradient(135deg, #009ee3 0%, #007bb0 100%)',
+                                    border: 'none',
+                                    padding: '1rem',
+                                    fontSize: '1.1rem',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+                                    boxShadow: '0 4px 6px rgba(0,158,227, 0.2)'
+                                }}
                                 disabled={isLoading}
                             >
-                                {isLoading ? 'Procesando...' : 'Pagar con tarjeta'}
+                                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                {isLoading ? 'Procesando...' : 'Pagar con Tarjeta'}
                             </button>
+
                             <button
                                 onClick={handlePayWithTransfer}
                                 className="nav-button"
-                                style={{ width: '100%', justifyContent: 'center' }}
+                                style={{
+                                    width: '100%',
+                                    justifyContent: 'center',
+                                    background: 'white',
+                                    color: 'var(--primary)',
+                                    border: '2px solid var(--border-color)',
+                                    padding: '1rem',
+                                    fontSize: '1rem',
+                                    height: 'auto'
+                                }}
                             >
-                                Pagar por transferencia
+                                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                </svg>
+                                Pagar con Transferencia
                             </button>
                         </div>
-                        {error && <p style={{ color: 'red', marginTop: '1rem', textAlign: 'center' }}>{error}</p>}
+                        {error && <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '1rem', borderRadius: '8px', marginTop: '1rem', textAlign: 'center', border: '1px solid #fca5a5' }}>{error}</div>}
                     </div>
                 )}
 
                 {/* STEP 5: Confirmation */}
                 {step === 'confirmation' && result && (
                     <div className="fade-in" style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '4rem', color: '#27ae60', marginBottom: '1rem' }}>✓</div>
-                        <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>¡Casi listo!</h2>
+                        <div style={{ margin: '0 auto 1.5rem', width: '80px', height: '80px', background: '#e8f5e9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
 
-                        <div style={{ background: '#2c3e50', color: 'white', padding: '2rem', borderRadius: '8px', marginBottom: '2rem' }}>
-                            <p style={{ opacity: 0.8, marginBottom: '0.5rem' }}>Tu número de reservación</p>
-                            <div style={{ fontSize: '2rem', fontWeight: 'bold', letterSpacing: '2px' }}>
+                        <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', fontWeight: 'bold', color: '#1a1a1a' }}>¡Casi listo!</h2>
+                        <p style={{ color: '#666', marginBottom: '2rem' }}>
+                            Tu lugar ha sido apartado. <br />
+                            {paymentMethod === 'transfer' ? 'Realiza el pago para confirmar.' : 'Completa el proceso.'}
+                        </p>
+
+                        <div style={{ background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)', color: 'white', padding: '2rem', borderRadius: '16px', marginBottom: '2rem', boxShadow: '0 10px 20px -5px rgba(44, 62, 80, 0.3)' }}>
+                            <p style={{ opacity: 0.8, marginBottom: '0.5rem', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Tu número de reservación</p>
+                            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', letterSpacing: '2px', fontFamily: 'monospace', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
                                 {result.reservation_code}
                             </div>
+
+                            {result.boarding_access_code && (
+                                <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <p style={{ opacity: 0.8, marginBottom: '0.25rem', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#ffb74d', fontWeight: 'bold' }}>⭐ Tu código de abordaje ⭐</p>
+                                    <div style={{ fontSize: '2rem', fontWeight: '900', letterSpacing: '1px', color: '#ffcc80' }}>
+                                        {result.boarding_access_code}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {paymentMethod === 'transfer' && (
                             <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
-                                <p style={{ fontWeight: '600', marginBottom: '1rem' }}>Datos para transferencia:</p>
-                                <div style={{ background: '#f1f2f6', padding: '1rem', borderRadius: '8px', border: '1px solid #ddd' }}>
-                                    <div style={{ marginBottom: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-                                        <span>CLABE: <strong>722969010994673004</strong></span>
-                                        <button
-                                            onClick={handleCopyClabe}
-                                            style={{ background: '#ddd', border: 'none', borderRadius: '4px', padding: '0.25rem 0.5rem', cursor: 'pointer', fontSize: '0.8rem' }}
-                                        >
-                                            Copiar
-                                        </button>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                    <h3 style={{ fontWeight: '600', margin: 0, fontSize: '1.1rem', color: '#333' }}>Datos para transferencia</h3>
+                                    <button
+                                        onClick={() => setStep('payment')}
+                                        style={{ fontSize: '0.9rem', color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+                                    >
+                                        Cambiar método
+                                    </button>
+                                </div>
+                                <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden' }}>
+                                    <div style={{ padding: '1.25rem', borderBottom: '1px solid #eee' }}>
+                                        <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>CLABE Interbancaria</div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <span style={{ fontSize: '1.2rem', fontWeight: '600', fontFamily: 'monospace', color: '#333' }}>722969010994673004</span>
+                                            <button
+                                                onClick={handleCopyClabe}
+                                                style={{
+                                                    background: '#f1f2f6', border: 'none', borderRadius: '6px',
+                                                    width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    cursor: 'pointer', color: '#666'
+                                                }}
+                                                title="Copiar CLABE"
+                                            >
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <p style={{ margin: '0.5rem 0' }}>Banco: <strong>Mercado Pago</strong></p>
-                                    <p style={{ margin: 0 }}>Beneficiario: <strong>Gady Hernández</strong></p>
+                                    <div style={{ padding: '1.25rem', background: '#f8f9fa', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        <div>
+                                            <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>Banco</div>
+                                            <div style={{ fontWeight: '600', color: '#333' }}>Mercado Pago</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>Beneficiario</div>
+                                            <div style={{ fontWeight: '600', color: '#333' }}>Gady Hernández</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
 
-                        <p style={{ color: '#666', marginBottom: '2rem' }}>
-                            Se ha descargado tu ticket de reservación. <br />
-                            Envía el comprobante por WhatsApp para confirmar tu pago.
-                        </p>
+                        <div style={{ background: '#fff3cd', color: '#856404', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', fontSize: '0.95rem', border: '1px solid #ffeeba' }}>
+                            <p style={{ margin: 0 }}>
+                                <strong>Importante:</strong> Envía tu comprobante por WhatsApp para confirmar tu pago y asegurar tus lugares.
+                            </p>
+                        </div>
 
                         <Link
                             href={getWhatsAppLink(buildWhatsAppMessage(
@@ -619,19 +748,38 @@ export default function ReservarPage() {
                             ))}
                             target="_blank"
                             className="cta-button"
-                            style={{ display: 'block', textDecoration: 'none', marginBottom: '1rem' }}
+                            style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+                                textDecoration: 'none', marginBottom: '1rem',
+                                background: '#25D366' // WhatsApp brand color
+                            }}
                         >
-                            Enviar información por WhatsApp
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                            </svg>
+                            Enviar comprobante por WhatsApp
                         </Link>
 
                         <button
                             onClick={generateTicketImage}
-                            style={{ background: 'none', border: 'none', color: 'var(--primary)', textDecoration: 'underline', cursor: 'pointer', marginBottom: '1rem', fontSize: '0.9rem' }}
+                            style={{
+                                background: 'transparent',
+                                border: '2px solid #e0e0e0', color: '#666',
+                                borderRadius: '8px', padding: '0.75rem', width: '100%',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                                cursor: 'pointer', fontSize: '0.95rem', fontWeight: '500',
+                                transition: 'all 0.2s ease'
+                            }}
                         >
-                            Descargar Ticket Nuevamente
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Descargar Ticket
                         </button>
 
-                        <Link href="/" style={{ color: '#666', textDecoration: 'underline', display: 'block' }}>
+                        <Link href="/" style={{ color: '#999', textDecoration: 'none', display: 'block', marginTop: '1.5rem', fontSize: '0.9rem' }}>
                             Volver al inicio
                         </Link>
                     </div>
@@ -671,6 +819,14 @@ function ReservationTicket({ result, passengers, responsibleName, responsibleLas
             <div style={{ background: '#f8f9fa', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', textAlign: 'center' }}>
                 <p style={{ margin: 0, fontSize: '0.9rem', color: '#666', textTransform: 'uppercase' }}>Código de Reservación</p>
                 <h2 style={{ margin: '0.5rem 0 0', fontSize: '2.5rem', letterSpacing: '2px', color: '#2c3e50' }}>{result.reservation_code}</h2>
+                {result.boarding_access_code && (
+                    <div style={{ marginTop: '1rem', borderTop: '1px dashed #ccc', paddingTop: '1rem' }}>
+                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#666', textTransform: 'uppercase' }}>Código de Abordaje</p>
+                        <p style={{ margin: '0.25rem 0 0', fontSize: '1.5rem', fontWeight: 'bold', color: '#e65100', letterSpacing: '1px' }}>
+                            {result.boarding_access_code}
+                        </p>
+                    </div>
+                )}
             </div>
 
             <div style={{ marginBottom: '2rem' }}>
@@ -717,8 +873,9 @@ function ReservationTicket({ result, passengers, responsibleName, responsibleLas
                     </p>
                 </div>
             </div>
-            <p style={{ textAlign: 'center', marginTop: '2rem', color: '#999', fontSize: '0.8rem' }}>
-                Guarda este ticket para cualquier aclaración.
+            <p style={{ textAlign: 'center', marginTop: '2rem', color: '#999', fontSize: '0.9rem' }}>
+                Guarda este ticket para cualquier aclaración.<br />
+                <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Dudas o comprobantes: 961 872 0544</span>
             </p>
         </div>
     )
