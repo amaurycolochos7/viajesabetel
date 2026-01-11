@@ -23,6 +23,7 @@ export default function ReservarPage() {
     const [childrenCount, setChildrenCount] = useState(0)
     const [passengers, setPassengers] = useState<Passenger[]>([])
     const [responsibleName, setResponsibleName] = useState('')
+    const [responsibleLastName, setResponsibleLastName] = useState('')
     const [responsiblePhone, setResponsiblePhone] = useState('')
     const [responsibleCongregation, setResponsibleCongregation] = useState('')
     const [isLoading, setIsLoading] = useState(false)
@@ -32,36 +33,78 @@ export default function ReservarPage() {
     const [isDeposit, setIsDeposit] = useState(true)
 
     const totalSeats = adultsCount + childrenCount
-    const seatsPayable = adultsCount // Solo adultos pagan
+    const seatsPayable = adultsCount
     const totalAmount = seatsPayable * 1700
     const depositRequired = totalAmount * 0.5
 
+    // Solo permite números y máximo 10 dígitos
+    const handlePhoneChange = (value: string) => {
+        const numbersOnly = value.replace(/\D/g, '').slice(0, 10)
+        setResponsiblePhone(numbersOnly)
+    }
+
     const initPassengers = () => {
         const newPassengers: Passenger[] = []
-        // Primero adultos
+
+        // Si solo hay 1 adulto, el responsable ES ese adulto (no pedir de nuevo)
+        const startAdultIndex = adultsCount === 1 && childrenCount === 0 ? 0 : 0
+
+        // Adultos adicionales (si el responsable ya cuenta como 1)
         for (let i = 0; i < adultsCount; i++) {
-            newPassengers.push({
-                first_name: '',
-                last_name: '',
-                phone: '',
-                congregation: '',
-                age: undefined,
-                observations: '',
-            })
+            // Si es 1 solo adulto sin niños, usamos los datos del responsable
+            if (adultsCount === 1 && childrenCount === 0) {
+                newPassengers.push({
+                    first_name: responsibleName,
+                    last_name: responsibleLastName,
+                    phone: responsiblePhone,
+                    congregation: responsibleCongregation,
+                    age: undefined,
+                    observations: '',
+                })
+            } else {
+                // Primer adulto = responsable
+                if (i === 0) {
+                    newPassengers.push({
+                        first_name: responsibleName,
+                        last_name: responsibleLastName,
+                        phone: responsiblePhone,
+                        congregation: responsibleCongregation,
+                        age: undefined,
+                        observations: '',
+                    })
+                } else {
+                    newPassengers.push({
+                        first_name: '',
+                        last_name: '',
+                        phone: '',
+                        congregation: '',
+                        age: undefined,
+                        observations: '',
+                    })
+                }
+            }
         }
-        // Luego niños
+
+        // Niños
         for (let i = 0; i < childrenCount; i++) {
             newPassengers.push({
                 first_name: '',
                 last_name: '',
                 phone: '',
                 congregation: '',
-                age: 5, // Menor de 6 por defecto
+                age: 5,
                 observations: '',
             })
         }
+
         setPassengers(newPassengers)
-        setStep('passengers')
+
+        // Si es 1 adulto sin niños, saltar directo a resumen
+        if (adultsCount === 1 && childrenCount === 0) {
+            setStep('summary')
+        } else {
+            setStep('passengers')
+        }
     }
 
     const updatePassenger = (index: number, field: keyof Passenger, value: string | number) => {
@@ -80,7 +123,7 @@ export default function ReservarPage() {
 
         try {
             const { data, error: rpcError } = await supabase.rpc('create_reservation', {
-                p_responsible_name: responsibleName,
+                p_responsible_name: `${responsibleName} ${responsibleLastName}`,
                 p_responsible_phone: responsiblePhone,
                 p_responsible_congregation: responsibleCongregation || null,
                 p_passengers: passengers,
@@ -101,6 +144,7 @@ export default function ReservarPage() {
     const handlePayWithCard = async () => {
         if (!result) return
         setIsLoading(true)
+        setError('')
 
         try {
             const response = await fetch('/api/mp/create-preference', {
@@ -108,7 +152,7 @@ export default function ReservarPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     reservationCode: result.reservation_code,
-                    responsibleName,
+                    responsibleName: `${responsibleName} ${responsibleLastName}`,
                     totalAmount: result.total_amount,
                     seatsPayable: result.seats_payable,
                     isDeposit,
@@ -117,14 +161,20 @@ export default function ReservarPage() {
 
             const data = await response.json()
 
+            if (data.error) {
+                throw new Error(data.error)
+            }
+
             if (data.sandboxInitPoint) {
                 window.location.href = data.sandboxInitPoint
             } else if (data.initPoint) {
                 window.location.href = data.initPoint
+            } else {
+                throw new Error('No se recibió URL de pago')
             }
         } catch (err) {
             console.error(err)
-            setError('Error al procesar el pago')
+            setError('Error al conectar con Mercado Pago. Intenta con transferencia.')
             setIsLoading(false)
         }
     }
@@ -134,18 +184,24 @@ export default function ReservarPage() {
         setStep('confirmation')
     }
 
-    const renderStepIndicator = () => (
-        <div className="step-indicator">
-            {['seats', 'passengers', 'summary', 'payment', 'confirmation'].map((s, i) => (
-                <div
-                    key={s}
-                    className={`step-dot ${s === step ? 'active' :
-                        ['seats', 'passengers', 'summary', 'payment', 'confirmation'].indexOf(step) > i ? 'completed' : ''
-                        }`}
-                />
-            ))}
-        </div>
-    )
+    const renderStepIndicator = () => {
+        const steps = adultsCount === 1 && childrenCount === 0
+            ? ['seats', 'summary', 'payment', 'confirmation']
+            : ['seats', 'passengers', 'summary', 'payment', 'confirmation']
+
+        return (
+            <div className="step-indicator">
+                {steps.map((s, i) => (
+                    <div
+                        key={s}
+                        className={`step-dot ${s === step ? 'active' : steps.indexOf(step) > i ? 'completed' : ''}`}
+                    />
+                ))}
+            </div>
+        )
+    }
+
+    const isPhoneValid = responsiblePhone.length === 10
 
     return (
         <main>
@@ -169,7 +225,7 @@ export default function ReservarPage() {
 
                 {renderStepIndicator()}
 
-                {/* STEP 1: Seats Selection - Simplified */}
+                {/* STEP 1: Seats Selection */}
                 {step === 'seats' && (
                     <div className="card">
                         <h2 className="section-title">¿Quiénes viajan?</h2>
@@ -242,37 +298,50 @@ export default function ReservarPage() {
                             </div>
                         </div>
 
-                        <button className="nav-button" style={{ width: '100%' }} onClick={initPassengers}>
-                            Siguiente →
-                        </button>
-                    </div>
-                )}
+                        <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
 
-                {/* STEP 2: Passenger Forms */}
-                {step === 'passengers' && (
-                    <div className="card">
-                        <h2 className="section-title">Datos de los viajeros</h2>
+                        <h3 style={{ fontWeight: '600', marginBottom: '1rem' }}>Datos del responsable</h3>
 
-                        <div className="form-group">
-                            <label className="form-label">Nombre del responsable *</label>
-                            <input
-                                type="text"
-                                className="form-input"
-                                value={responsibleName}
-                                onChange={(e) => setResponsibleName(e.target.value)}
-                                placeholder="Nombre completo"
-                            />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                            <div>
+                                <label className="form-label">Nombre *</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={responsibleName}
+                                    onChange={(e) => setResponsibleName(e.target.value)}
+                                    placeholder="Nombre"
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label">Apellido *</label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={responsibleLastName}
+                                    onChange={(e) => setResponsibleLastName(e.target.value)}
+                                    placeholder="Apellido"
+                                />
+                            </div>
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Teléfono del responsable *</label>
+                            <label className="form-label">Teléfono (10 dígitos) *</label>
                             <input
                                 type="tel"
                                 className="form-input"
                                 value={responsiblePhone}
-                                onChange={(e) => setResponsiblePhone(e.target.value)}
-                                placeholder="10 dígitos"
+                                onChange={(e) => handlePhoneChange(e.target.value)}
+                                placeholder="Ej: 9611234567"
+                                maxLength={10}
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                             />
+                            {responsiblePhone && !isPhoneValid && (
+                                <p style={{ color: '#c62828', fontSize: '0.8rem', marginTop: '0.25rem' }}>
+                                    Debe ser un número de 10 dígitos
+                                </p>
+                            )}
                         </div>
 
                         <div className="form-group">
@@ -286,15 +355,34 @@ export default function ReservarPage() {
                             />
                         </div>
 
-                        <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
+                        <button
+                            className="nav-button"
+                            style={{ width: '100%', marginTop: '1rem' }}
+                            onClick={initPassengers}
+                            disabled={!responsibleName || !responsibleLastName || !isPhoneValid}
+                        >
+                            Siguiente →
+                        </button>
+                    </div>
+                )}
 
-                        {passengers.map((passenger, index) => {
+                {/* STEP 2: Additional Passengers (only if more than 1 person) */}
+                {step === 'passengers' && (
+                    <div className="card">
+                        <h2 className="section-title">Datos de los demás viajeros</h2>
+
+                        <p style={{ color: 'var(--text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                            El responsable ({responsibleName}) ya está registrado.
+                        </p>
+
+                        {passengers.slice(1).map((passenger, idx) => {
+                            const index = idx + 1
                             const isChild = passenger.age !== undefined && passenger.age < 6
                             return (
                                 <div key={index} className="passenger-card">
                                     <div className="passenger-header">
                                         <span className="passenger-number">
-                                            {isChild ? `Niño ${index - adultsCount + 1}` : `Adulto ${index + 1}`}
+                                            {isChild ? `Niño ${idx + 1 - (adultsCount - 1)}` : `Adulto ${idx + 2}`}
                                         </span>
                                         {isChild && (
                                             <span style={{
@@ -332,7 +420,7 @@ export default function ReservarPage() {
 
                                     {isChild && (
                                         <div style={{ marginTop: '0.75rem' }}>
-                                            <label className="form-label" style={{ fontSize: '0.85rem' }}>Edad del niño *</label>
+                                            <label className="form-label" style={{ fontSize: '0.85rem' }}>Edad *</label>
                                             <input
                                                 type="number"
                                                 className="form-input"
@@ -360,7 +448,7 @@ export default function ReservarPage() {
                                 className="nav-button"
                                 style={{ flex: 1 }}
                                 onClick={() => setStep('summary')}
-                                disabled={!responsibleName || !responsiblePhone || passengers.some(p => !p.first_name || !p.last_name)}
+                                disabled={passengers.slice(1).some(p => !p.first_name || !p.last_name)}
                             >
                                 Siguiente →
                             </button>
@@ -374,6 +462,14 @@ export default function ReservarPage() {
                         <h2 className="section-title">Confirma tu reservación</h2>
 
                         <div className="summary-row">
+                            <span>Responsable</span>
+                            <strong>{responsibleName} {responsibleLastName}</strong>
+                        </div>
+                        <div className="summary-row">
+                            <span>Teléfono</span>
+                            <strong>{responsiblePhone}</strong>
+                        </div>
+                        <div className="summary-row">
                             <span>Adultos</span>
                             <strong>{adultsCount}</strong>
                         </div>
@@ -383,10 +479,6 @@ export default function ReservarPage() {
                                 <strong>{childrenCount} (gratis)</strong>
                             </div>
                         )}
-                        <div className="summary-row">
-                            <span>Precio por adulto</span>
-                            <strong>$1,700</strong>
-                        </div>
                         <div className="summary-row total">
                             <span>Total</span>
                             <strong>${totalAmount.toLocaleString('es-MX')}</strong>
@@ -406,7 +498,13 @@ export default function ReservarPage() {
                             <button
                                 className="nav-button secondary"
                                 style={{ flex: 1 }}
-                                onClick={() => setStep('passengers')}
+                                onClick={() => {
+                                    if (adultsCount === 1 && childrenCount === 0) {
+                                        setStep('seats')
+                                    } else {
+                                        setStep('passengers')
+                                    }
+                                }}
                             >
                                 ← Atrás
                             </button>
@@ -552,7 +650,7 @@ export default function ReservarPage() {
                         <a
                             href={getWhatsAppLink(buildWhatsAppMessage(
                                 result.reservation_code,
-                                responsibleName,
+                                `${responsibleName} ${responsibleLastName}`,
                                 responsiblePhone,
                                 responsibleCongregation,
                                 passengers,
