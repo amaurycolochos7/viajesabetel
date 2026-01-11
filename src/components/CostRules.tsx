@@ -1,7 +1,7 @@
 export default function CostRules() {
     return (
-        <section className="card" style={{ marginBottom: '1rem' }}>
-            <h2 className="section-title">Costo y Reglas</h2>
+        <section className="card" style={{ marginBottom: '1.5rem' }}>
+            <h2 className="section-title">Costo</h2>
 
             <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
                 <div className="price-highlight">$1,700 MXN</div>
@@ -24,6 +24,11 @@ export default function CostRules() {
                     <span>Asientos asignados por orden de pago</span>
                 </div>
             </div>
+
+            {/* CTA Button */}
+            <a href="/reservar" className="cta-button" style={{ marginTop: '1.5rem' }}>
+                Reservar lugar
+            </a>
         </section>
     )
 }

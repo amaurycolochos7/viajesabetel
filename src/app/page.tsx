@@ -2,7 +2,6 @@ import Link from 'next/link'
 import HeroCarousel from '@/components/HeroCarousel'
 import Itinerary from '@/components/Itinerary'
 import CostRules from '@/components/CostRules'
-import PaymentMethods from '@/components/PaymentMethods'
 
 export default function Home() {
   return (
@@ -29,7 +28,6 @@ export default function Home() {
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1.5rem' }}>
         <Itinerary />
         <CostRules />
-        <PaymentMethods />
       </div>
 
       {/* Footer with hidden admin access */}
