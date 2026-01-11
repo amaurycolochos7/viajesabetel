@@ -5,7 +5,6 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Reservation, ReservationPassenger, Payment } from '@/types'
-import { buildWhatsAppMessage, getWhatsAppLink } from '@/lib/whatsapp'
 
 export default function ReservacionDetailPage() {
     const router = useRouter()
@@ -16,6 +15,7 @@ export default function ReservacionDetailPage() {
     const [isLoading, setIsLoading] = useState(true)
 
     const [paymentAmount, setPaymentAmount] = useState('')
+    const [paymentMethod, setPaymentMethod] = useState('transferencia')
     const [paymentReference, setPaymentReference] = useState('')
     const [paymentNote, setPaymentNote] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -88,6 +88,7 @@ export default function ReservacionDetailPage() {
                 .insert({
                     reservation_id: reservation.id,
                     amount,
+                    method: paymentMethod,
                     reference: paymentReference || null,
                     note: paymentNote || null,
                 })
@@ -154,6 +155,69 @@ export default function ReservacionDetailPage() {
         return labels[status] || status
     }
 
+    const getStatusColor = (status: string) => {
+        const colors: Record<string, string> = {
+            pendiente: '#f39c12',
+            anticipo_pagado: '#3498db',
+            pagado_completo: '#27ae60',
+            cancelado: '#e74c3c',
+        }
+        return colors[status] || '#666'
+    }
+
+    const getMethodLabel = (method: string) => {
+        const labels: Record<string, string> = {
+            transferencia: 'Transferencia',
+            mercadopago: 'Mercado Pago',
+            efectivo: 'Efectivo',
+            deposito: 'Depósito',
+        }
+        return labels[method] || method
+    }
+
+    const buildConfirmationMessage = (type: 'anticipo' | 'completo') => {
+        if (!reservation) return ''
+
+        const amountPaid = reservation.amount_paid + (paymentAmount ? parseFloat(paymentAmount) : 0)
+        const remaining = reservation.total_amount - amountPaid
+
+        if (type === 'anticipo') {
+            return `Hola ${reservation.responsible_name},
+
+Tu anticipo ha sido registrado exitosamente.
+
+— Código de reservación: ${reservation.reservation_code}
+— Monto recibido: $${amountPaid.toLocaleString('es-MX')}
+— Saldo pendiente: $${remaining.toLocaleString('es-MX')}
+
+Tu lugar está confirmado para el viaje a Betel del 7-9 de abril de 2026.
+
+Recuerda completar el pago antes de la fecha límite.
+
+¡Gracias!`
+        }
+
+        return `Hola ${reservation.responsible_name},
+
+Tu pago ha sido completado exitosamente.
+
+— Código de reservación: ${reservation.reservation_code}
+— Total pagado: $${reservation.total_amount.toLocaleString('es-MX')}
+— Lugares confirmados: ${reservation.seats_total}
+
+Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 2026.
+
+¡Nos vemos pronto!`
+    }
+
+    const getWhatsAppConfirmationLink = (type: 'anticipo' | 'completo') => {
+        if (!reservation) return '#'
+        const message = buildConfirmationMessage(type)
+        const phone = reservation.responsible_phone.replace(/\D/g, '')
+        const fullPhone = phone.startsWith('52') ? phone : `52${phone}`
+        return `https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`
+    }
+
     if (isLoading) {
         return (
             <div style={{
@@ -161,7 +225,7 @@ export default function ReservacionDetailPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'var(--bg-page)'
+                background: '#f5f6fa'
             }}>
                 <p>Cargando...</p>
             </div>
@@ -170,7 +234,7 @@ export default function ReservacionDetailPage() {
 
     if (!reservation) {
         return (
-            <div style={{ padding: '2rem', textAlign: 'center', background: 'var(--bg-page)', minHeight: '100vh' }}>
+            <div style={{ padding: '2rem', textAlign: 'center', background: '#f5f6fa', minHeight: '100vh' }}>
                 <p>Reservación no encontrada</p>
                 <Link href="/admin/reservaciones" className="nav-button" style={{ marginTop: '1rem', display: 'inline-block', textDecoration: 'none' }}>
                     Volver
@@ -180,9 +244,10 @@ export default function ReservacionDetailPage() {
     }
 
     const remainingBalance = reservation.total_amount - reservation.amount_paid
+    const progressPercent = Math.min(100, (reservation.amount_paid / reservation.total_amount) * 100)
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-page)' }}>
+        <div style={{ minHeight: '100vh', background: '#f5f6fa' }}>
             {/* Header */}
             <header style={{
                 background: 'var(--primary)',
@@ -202,7 +267,15 @@ export default function ReservacionDetailPage() {
                     <h1 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0 }}>
                         {reservation.reservation_code}
                     </h1>
-                    <span className={`status-badge status-${reservation.status}`}>
+                    <span style={{
+                        display: 'inline-block',
+                        padding: '0.25rem 0.75rem',
+                        borderRadius: '20px',
+                        fontSize: '0.8rem',
+                        fontWeight: '600',
+                        background: getStatusColor(reservation.status) + '40',
+                        color: 'white'
+                    }}>
                         {getStatusLabel(reservation.status)}
                     </span>
                 </div>
@@ -222,61 +295,80 @@ export default function ReservacionDetailPage() {
                 </button>
             </header>
 
-            <main style={{ maxWidth: '800px', margin: '0 auto', padding: '1.5rem' }}>
+            <main style={{ maxWidth: '900px', margin: '0 auto', padding: '1.5rem' }}>
                 <div style={{ display: 'grid', gap: '1.5rem' }}>
-                    {/* Reservation Info */}
-                    <div className="card">
-                        <h2 className="section-title">Información del responsable</h2>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
-                            <div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Nombre</div>
-                                <div style={{ fontWeight: '500' }}>{reservation.responsible_name}</div>
-                            </div>
-                            <div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Teléfono</div>
-                                <div style={{ fontWeight: '500' }}>{reservation.responsible_phone}</div>
-                            </div>
-                            <div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Congregación</div>
-                                <div style={{ fontWeight: '500' }}>{reservation.responsible_congregation || '—'}</div>
-                            </div>
+                    {/* Payment Progress */}
+                    <div className="card" style={{ background: 'white', padding: '1.5rem', borderRadius: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                            <h2 style={{ fontWeight: '600', margin: 0 }}>Progreso de pago</h2>
+                            <span style={{ fontWeight: '700', color: 'var(--primary)', fontSize: '1.25rem' }}>
+                                {Math.round(progressPercent)}%
+                            </span>
                         </div>
-
-                        <hr style={{ margin: '1.25rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
-
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '1rem', textAlign: 'center' }}>
+                        <div style={{
+                            height: '12px',
+                            background: '#e0e0e0',
+                            borderRadius: '6px',
+                            overflow: 'hidden',
+                            marginBottom: '1rem'
+                        }}>
+                            <div style={{
+                                width: `${progressPercent}%`,
+                                height: '100%',
+                                background: progressPercent >= 100 ? '#27ae60' : progressPercent >= 50 ? '#3498db' : '#f39c12',
+                                transition: 'width 0.3s ease'
+                            }} />
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', textAlign: 'center' }}>
                             <div>
-                                <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{reservation.seats_total}</div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Lugares</div>
+                                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#27ae60' }}>
+                                    ${reservation.amount_paid.toLocaleString('es-MX')}
+                                </div>
+                                <div style={{ color: '#666', fontSize: '0.85rem' }}>Pagado</div>
                             </div>
                             <div>
-                                <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>{reservation.seats_payable}</div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Pagan</div>
+                                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: remainingBalance > 0 ? '#e74c3c' : '#27ae60' }}>
+                                    ${remainingBalance.toLocaleString('es-MX')}
+                                </div>
+                                <div style={{ color: '#666', fontSize: '0.85rem' }}>Saldo</div>
                             </div>
                             <div>
                                 <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--primary)' }}>
                                     ${reservation.total_amount.toLocaleString('es-MX')}
                                 </div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Total</div>
+                                <div style={{ color: '#666', fontSize: '0.85rem' }}>Total</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Reservation Info */}
+                    <div className="card" style={{ background: 'white', padding: '1.5rem', borderRadius: '8px' }}>
+                        <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Información del responsable</h2>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                            <div>
+                                <div style={{ color: '#666', fontSize: '0.85rem' }}>Nombre</div>
+                                <div style={{ fontWeight: '500', fontSize: '1.1rem' }}>{reservation.responsible_name}</div>
                             </div>
                             <div>
-                                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#2e7d32' }}>
-                                    ${reservation.amount_paid.toLocaleString('es-MX')}
-                                </div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Pagado</div>
+                                <div style={{ color: '#666', fontSize: '0.85rem' }}>Teléfono</div>
+                                <div style={{ fontWeight: '500', fontSize: '1.1rem' }}>{reservation.responsible_phone}</div>
                             </div>
                             <div>
-                                <div style={{ fontSize: '1.5rem', fontWeight: '700', color: remainingBalance > 0 ? '#c62828' : '#2e7d32' }}>
-                                    ${remainingBalance.toLocaleString('es-MX')}
+                                <div style={{ color: '#666', fontSize: '0.85rem' }}>Congregación</div>
+                                <div style={{ fontWeight: '500', fontSize: '1.1rem' }}>{reservation.responsible_congregation || '—'}</div>
+                            </div>
+                            <div>
+                                <div style={{ color: '#666', fontSize: '0.85rem' }}>Lugares</div>
+                                <div style={{ fontWeight: '500', fontSize: '1.1rem' }}>
+                                    {reservation.seats_payable} pagan / {reservation.seats_total} total
                                 </div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Saldo</div>
                             </div>
                         </div>
                     </div>
 
                     {/* Passengers */}
-                    <div className="card">
-                        <h2 className="section-title">Pasajeros ({passengers.length})</h2>
+                    <div className="card" style={{ background: 'white', padding: '1.5rem', borderRadius: '8px' }}>
+                        <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Pasajeros ({passengers.length})</h2>
                         <div style={{ display: 'grid', gap: '0.5rem' }}>
                             {passengers.map((passenger, index) => (
                                 <div
@@ -285,21 +377,20 @@ export default function ReservacionDetailPage() {
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
-                                        padding: '0.625rem 0.75rem',
+                                        padding: '0.75rem',
                                         background: '#f8f9fa',
-                                        borderRadius: '4px',
-                                        fontSize: '0.9rem'
+                                        borderRadius: '4px'
                                     }}
                                 >
                                     <div>
                                         <strong>{index + 1}.</strong> {passenger.first_name} {passenger.last_name}
                                         {passenger.congregation && (
-                                            <span style={{ color: 'var(--text-muted)' }}> — {passenger.congregation}</span>
+                                            <span style={{ color: '#666' }}> — {passenger.congregation}</span>
                                         )}
                                     </div>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        {passenger.age !== null && (
-                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{passenger.age} años</span>
+                                        {passenger.age !== null && passenger.age !== undefined && (
+                                            <span style={{ fontSize: '0.85rem', color: '#666' }}>{passenger.age} años</span>
                                         )}
                                         {passenger.is_free_under6 && (
                                             <span style={{
@@ -319,12 +410,12 @@ export default function ReservacionDetailPage() {
                         </div>
                     </div>
 
-                    {/* Payments */}
-                    <div className="card">
-                        <h2 className="section-title">Pagos registrados</h2>
+                    {/* Payments History */}
+                    <div className="card" style={{ background: 'white', padding: '1.5rem', borderRadius: '8px' }}>
+                        <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Historial de pagos</h2>
 
                         {payments.length === 0 ? (
-                            <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>
+                            <p style={{ color: '#666', textAlign: 'center', padding: '1rem' }}>
                                 Sin pagos registrados
                             </p>
                         ) : (
@@ -336,25 +427,39 @@ export default function ReservacionDetailPage() {
                                             display: 'flex',
                                             justifyContent: 'space-between',
                                             alignItems: 'center',
-                                            padding: '0.625rem 0',
-                                            borderBottom: '1px solid var(--border-color)'
+                                            padding: '0.75rem',
+                                            borderBottom: '1px solid #e0e0e0'
                                         }}
                                     >
                                         <div>
-                                            <div style={{ fontWeight: '600', color: '#2e7d32' }}>
-                                                +${payment.amount.toLocaleString('es-MX')}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                <span style={{ fontWeight: '600', color: '#27ae60', fontSize: '1.1rem' }}>
+                                                    +${payment.amount.toLocaleString('es-MX')}
+                                                </span>
+                                                <span style={{
+                                                    background: payment.method === 'mercadopago' ? '#009ee3' : '#666',
+                                                    color: 'white',
+                                                    padding: '0.15rem 0.5rem',
+                                                    borderRadius: '3px',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    {getMethodLabel(payment.method || 'transferencia')}
+                                                </span>
                                             </div>
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.25rem' }}>
                                                 {new Date(payment.paid_at).toLocaleDateString('es-MX', {
                                                     day: 'numeric',
                                                     month: 'short',
-                                                    year: 'numeric'
+                                                    year: 'numeric',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
                                                 })}
                                                 {payment.reference && ` — Ref: ${payment.reference}`}
                                             </div>
                                         </div>
                                         {payment.note && (
-                                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                            <div style={{ fontSize: '0.85rem', color: '#666', fontStyle: 'italic' }}>
                                                 {payment.note}
                                             </div>
                                         )}
@@ -363,9 +468,11 @@ export default function ReservacionDetailPage() {
                             </div>
                         )}
 
-                        <form onSubmit={handleAddPayment} style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
-                            <h3 style={{ fontWeight: '600', marginBottom: '0.75rem', fontSize: '0.95rem' }}>Registrar pago</h3>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
+                        <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid #e0e0e0' }} />
+
+                        <form onSubmit={handleAddPayment}>
+                            <h3 style={{ fontWeight: '600', marginBottom: '1rem' }}>Registrar nuevo pago</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
                                 <div>
                                     <label className="form-label">Monto *</label>
                                     <input
@@ -377,6 +484,19 @@ export default function ReservacionDetailPage() {
                                         step="0.01"
                                         required
                                     />
+                                </div>
+                                <div>
+                                    <label className="form-label">Método *</label>
+                                    <select
+                                        className="form-input"
+                                        value={paymentMethod}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                    >
+                                        <option value="transferencia">Transferencia</option>
+                                        <option value="mercadopago">Mercado Pago</option>
+                                        <option value="deposito">Depósito</option>
+                                        <option value="efectivo">Efectivo</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label className="form-label">Referencia</label>
@@ -402,7 +522,7 @@ export default function ReservacionDetailPage() {
                             <button
                                 type="submit"
                                 className="nav-button"
-                                style={{ marginTop: '0.75rem' }}
+                                style={{ marginTop: '1rem' }}
                                 disabled={isSubmitting || !paymentAmount}
                             >
                                 {isSubmitting ? 'Registrando...' : 'Registrar pago'}
@@ -410,12 +530,58 @@ export default function ReservacionDetailPage() {
                         </form>
                     </div>
 
+                    {/* Send Confirmation Messages */}
+                    <div className="card" style={{ background: 'white', padding: '1.5rem', borderRadius: '8px' }}>
+                        <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Enviar confirmación por WhatsApp</h2>
+                        <p style={{ color: '#666', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                            Envía un mensaje al cliente confirmando su pago registrado.
+                        </p>
+                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                            <a
+                                href={getWhatsAppConfirmationLink('anticipo')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    padding: '0.75rem 1.25rem',
+                                    background: '#25D366',
+                                    color: 'white',
+                                    borderRadius: '4px',
+                                    textDecoration: 'none',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                Confirmar anticipo
+                            </a>
+                            <a
+                                href={getWhatsAppConfirmationLink('completo')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    padding: '0.75rem 1.25rem',
+                                    background: '#128C7E',
+                                    color: 'white',
+                                    borderRadius: '4px',
+                                    textDecoration: 'none',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                Confirmar pago completo
+                            </a>
+                        </div>
+                    </div>
+
                     {/* Actions */}
-                    <div className="card">
-                        <h2 className="section-title">Acciones</h2>
+                    <div className="card" style={{ background: 'white', padding: '1.5rem', borderRadius: '8px' }}>
+                        <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Acciones</h2>
 
                         <div style={{ marginBottom: '1rem' }}>
-                            <label className="form-label">Cambiar estatus</label>
+                            <label className="form-label">Cambiar estatus manualmente</label>
                             <select
                                 className="form-input"
                                 value={reservation.status}
@@ -427,56 +593,6 @@ export default function ReservacionDetailPage() {
                                 <option value="pagado_completo">Pagado completo</option>
                                 <option value="cancelado">Cancelado</option>
                             </select>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                            <a
-                                href={getWhatsAppLink(buildWhatsAppMessage(
-                                    reservation.reservation_code,
-                                    reservation.responsible_name,
-                                    reservation.responsible_phone,
-                                    reservation.responsible_congregation || undefined,
-                                    passengers.map(p => ({
-                                        first_name: p.first_name,
-                                        last_name: p.last_name,
-                                        congregation: p.congregation || undefined,
-                                        age: p.age || undefined,
-                                    })),
-                                    reservation.seats_payable,
-                                    reservation.total_amount,
-                                    reservation.deposit_required
-                                ))}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="whatsapp-button"
-                                style={{ flex: 'none', width: 'auto', padding: '0.625rem 1rem' }}
-                            >
-                                Enviar por WhatsApp
-                            </a>
-                            <button
-                                className="nav-button secondary"
-                                onClick={() => {
-                                    const msg = buildWhatsAppMessage(
-                                        reservation.reservation_code,
-                                        reservation.responsible_name,
-                                        reservation.responsible_phone,
-                                        reservation.responsible_congregation || undefined,
-                                        passengers.map(p => ({
-                                            first_name: p.first_name,
-                                            last_name: p.last_name,
-                                            congregation: p.congregation || undefined,
-                                            age: p.age || undefined,
-                                        })),
-                                        reservation.seats_payable,
-                                        reservation.total_amount,
-                                        reservation.deposit_required
-                                    )
-                                    navigator.clipboard.writeText(msg)
-                                    alert('Mensaje copiado')
-                                }}
-                            >
-                                Copiar mensaje
-                            </button>
                         </div>
                     </div>
                 </div>
