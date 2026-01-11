@@ -580,7 +580,7 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                     <div className="card" style={{ background: 'white', padding: '1.5rem', borderRadius: '8px' }}>
                         <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Acciones</h2>
 
-                        <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ marginBottom: '1.5rem' }}>
                             <label className="form-label">Cambiar estatus manualmente</label>
                             <select
                                 className="form-input"
@@ -593,6 +593,43 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                                 <option value="pagado_completo">Pagado completo</option>
                                 <option value="cancelado">Cancelado</option>
                             </select>
+                        </div>
+
+                        <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid #e0e0e0' }} />
+
+                        <div>
+                            <h3 style={{ fontWeight: '600', marginBottom: '0.75rem', color: '#e74c3c' }}>Zona de peligro</h3>
+                            <button
+                                onClick={async () => {
+                                    if (!confirm(`¿Estás seguro de eliminar la reservación ${reservation.reservation_code}? Esta acción no se puede deshacer.`)) return
+
+                                    try {
+                                        const { error } = await supabase
+                                            .from('reservations')
+                                            .delete()
+                                            .eq('id', reservation.id)
+
+                                        if (error) throw error
+
+                                        alert('Reservación eliminada')
+                                        router.push('/admin/reservaciones')
+                                    } catch (err) {
+                                        console.error(err)
+                                        alert('Error al eliminar la reservación')
+                                    }
+                                }}
+                                style={{
+                                    padding: '0.75rem 1.25rem',
+                                    background: '#e74c3c',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    fontWeight: '500'
+                                }}
+                            >
+                                Eliminar reservación
+                            </button>
                         </div>
                     </div>
                 </div>

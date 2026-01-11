@@ -181,13 +181,20 @@ export default function AdminDashboard() {
                 )}
 
                 {/* Quick Actions */}
-                <div style={{ marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                     <Link
                         href="/admin/reservaciones"
                         className="nav-button"
                         style={{ textDecoration: 'none' }}
                     >
-                        Ver todas las reservaciones
+                        Ver reservaciones
+                    </Link>
+                    <Link
+                        href="/admin/grupos"
+                        className="nav-button secondary"
+                        style={{ textDecoration: 'none' }}
+                    >
+                        Grupos de tour
                     </Link>
                 </div>
 
