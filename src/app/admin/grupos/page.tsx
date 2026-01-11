@@ -96,16 +96,17 @@ export default function TourGroupsPage() {
 
             const assignedIds = new Set((assignedData || []).map(a => a.passenger_id))
 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const eligible = passengersData
-                .filter(p => !assignedIds.has(p.id))
-                .map(p => ({
+                .filter((p: any) => !assignedIds.has(p.id))
+                .map((p: any) => ({
                     id: p.id,
                     first_name: p.first_name,
                     last_name: p.last_name,
                     congregation: p.congregation,
                     reservation_id: p.reservation_id,
-                    reservation_code: (p.reservations as { reservation_code: string }).reservation_code,
-                    responsible_phone: (p.reservations as { responsible_phone: string }).responsible_phone,
+                    reservation_code: p.reservations?.reservation_code || '',
+                    responsible_phone: p.reservations?.responsible_phone || '',
                 }))
 
             setEligiblePassengers(eligible)
@@ -124,12 +125,13 @@ export default function TourGroupsPage() {
             .eq('group_id', groupId)
 
         if (data) {
-            setGroupMembers(data.map(m => ({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setGroupMembers(data.map((m: any) => ({
                 id: m.id,
                 passenger_id: m.passenger_id,
-                passenger_first_name: (m.reservation_passengers as { first_name: string }).first_name,
-                passenger_last_name: (m.reservation_passengers as { last_name: string }).last_name,
-                reservation_code: (m.reservations as { reservation_code: string }).reservation_code,
+                passenger_first_name: m.reservation_passengers?.first_name || '',
+                passenger_last_name: m.reservation_passengers?.last_name || '',
+                reservation_code: m.reservations?.reservation_code || '',
             })))
         }
     }

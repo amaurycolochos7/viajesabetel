@@ -79,7 +79,8 @@ export default function MiGrupoPage() {
                 let groupInfo: GroupInfo | null = null
 
                 if (memberData) {
-                    const group = memberData.tour_groups as { group_name: string; tour_datetime: string | null }
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const group = memberData.tour_groups as any
 
                     // Get all members of this group
                     const { data: allMembers } = await supabase
@@ -90,11 +91,12 @@ export default function MiGrupoPage() {
                         .eq('group_id', memberData.group_id)
 
                     groupInfo = {
-                        group_name: group.group_name,
-                        tour_datetime: group.tour_datetime,
-                        members: (allMembers || []).map(m => ({
-                            first_name: (m.reservation_passengers as { first_name: string }).first_name,
-                            last_name: (m.reservation_passengers as { last_name: string }).last_name,
+                        group_name: group?.group_name || '',
+                        tour_datetime: group?.tour_datetime || null,
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        members: (allMembers || []).map((m: any) => ({
+                            first_name: m.reservation_passengers?.first_name || '',
+                            last_name: m.reservation_passengers?.last_name || '',
                         }))
                     }
                 }
