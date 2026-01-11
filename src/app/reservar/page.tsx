@@ -165,10 +165,10 @@ export default function ReservarPage() {
                 throw new Error(data.error)
             }
 
-            if (data.sandboxInitPoint) {
-                window.location.href = data.sandboxInitPoint
-            } else if (data.initPoint) {
+            if (data.initPoint) {
                 window.location.href = data.initPoint
+            } else if (data.sandboxInitPoint) {
+                window.location.href = data.sandboxInitPoint
             } else {
                 throw new Error('No se recibió URL de pago')
             }
