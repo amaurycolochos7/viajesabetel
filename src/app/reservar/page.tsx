@@ -19,8 +19,8 @@ interface ReservationResult {
 
 export default function ReservarPage() {
     const [step, setStep] = useState<Step>('seats')
-    const [totalSeats, setTotalSeats] = useState(1)
-    const [minorsCount, setMinorsCount] = useState(0)
+    const [adultsCount, setAdultsCount] = useState(1)
+    const [childrenCount, setChildrenCount] = useState(0)
     const [passengers, setPassengers] = useState<Passenger[]>([])
     const [responsibleName, setResponsibleName] = useState('')
     const [responsiblePhone, setResponsiblePhone] = useState('')
@@ -31,19 +31,32 @@ export default function ReservarPage() {
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null)
     const [isDeposit, setIsDeposit] = useState(true)
 
-    const seatsPayable = totalSeats - minorsCount
+    const totalSeats = adultsCount + childrenCount
+    const seatsPayable = adultsCount // Solo adultos pagan
     const totalAmount = seatsPayable * 1700
     const depositRequired = totalAmount * 0.5
 
     const initPassengers = () => {
         const newPassengers: Passenger[] = []
-        for (let i = 0; i < totalSeats; i++) {
+        // Primero adultos
+        for (let i = 0; i < adultsCount; i++) {
             newPassengers.push({
                 first_name: '',
                 last_name: '',
                 phone: '',
                 congregation: '',
-                age: i < minorsCount ? 5 : undefined,
+                age: undefined,
+                observations: '',
+            })
+        }
+        // Luego niños
+        for (let i = 0; i < childrenCount; i++) {
+            newPassengers.push({
+                first_name: '',
+                last_name: '',
+                phone: '',
+                congregation: '',
+                age: 5, // Menor de 6 por defecto
                 observations: '',
             })
         }
@@ -156,27 +169,30 @@ export default function ReservarPage() {
 
                 {renderStepIndicator()}
 
-                {/* STEP 1: Seats Selection */}
+                {/* STEP 1: Seats Selection - Simplified */}
                 {step === 'seats' && (
                     <div className="card">
-                        <h2 className="section-title">¿Cuántos lugares necesitas?</h2>
+                        <h2 className="section-title">¿Quiénes viajan?</h2>
 
                         <div style={{ marginBottom: '2rem' }}>
                             <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: '600' }}>
-                                Total de personas
+                                Adultos y niños mayores de 6 años
                             </label>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+                                $1,700 por persona
+                            </p>
                             <div className="counter">
                                 <button
                                     className="counter-btn"
-                                    onClick={() => setTotalSeats(Math.max(1, totalSeats - 1))}
-                                    disabled={totalSeats <= 1}
+                                    onClick={() => setAdultsCount(Math.max(1, adultsCount - 1))}
+                                    disabled={adultsCount <= 1}
                                 >
                                     −
                                 </button>
-                                <span className="counter-value">{totalSeats}</span>
+                                <span className="counter-value">{adultsCount}</span>
                                 <button
                                     className="counter-btn"
-                                    onClick={() => setTotalSeats(totalSeats + 1)}
+                                    onClick={() => setAdultsCount(adultsCount + 1)}
                                 >
                                     +
                                 </button>
@@ -185,21 +201,23 @@ export default function ReservarPage() {
 
                         <div style={{ marginBottom: '2rem' }}>
                             <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: '600' }}>
-                                Menores de 6 años (no pagan)
+                                Niños menores de 6 años
                             </label>
+                            <p style={{ fontSize: '0.85rem', color: '#2e7d32', marginBottom: '0.75rem' }}>
+                                Gratis
+                            </p>
                             <div className="counter">
                                 <button
                                     className="counter-btn"
-                                    onClick={() => setMinorsCount(Math.max(0, minorsCount - 1))}
-                                    disabled={minorsCount <= 0}
+                                    onClick={() => setChildrenCount(Math.max(0, childrenCount - 1))}
+                                    disabled={childrenCount <= 0}
                                 >
                                     −
                                 </button>
-                                <span className="counter-value">{minorsCount}</span>
+                                <span className="counter-value">{childrenCount}</span>
                                 <button
                                     className="counter-btn"
-                                    onClick={() => setMinorsCount(Math.min(totalSeats - 1, minorsCount + 1))}
-                                    disabled={minorsCount >= totalSeats - 1}
+                                    onClick={() => setChildrenCount(childrenCount + 1)}
                                 >
                                     +
                                 </button>
@@ -213,17 +231,19 @@ export default function ReservarPage() {
                             marginBottom: '1.5rem'
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                <span>Lugares que pagan:</span>
-                                <strong>{seatsPayable}</strong>
+                                <span>Total de viajeros:</span>
+                                <strong>{totalSeats}</strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span>Total estimado:</span>
-                                <strong style={{ color: 'var(--primary)' }}>${totalAmount.toLocaleString('es-MX')}</strong>
+                                <span>Total a pagar:</span>
+                                <strong style={{ color: 'var(--primary)', fontSize: '1.25rem' }}>
+                                    ${totalAmount.toLocaleString('es-MX')}
+                                </strong>
                             </div>
                         </div>
 
                         <button className="nav-button" style={{ width: '100%' }} onClick={initPassengers}>
-                            Siguiente
+                            Siguiente →
                         </button>
                     </div>
                 )}
@@ -231,7 +251,7 @@ export default function ReservarPage() {
                 {/* STEP 2: Passenger Forms */}
                 {step === 'passengers' && (
                     <div className="card">
-                        <h2 className="section-title">Datos de los pasajeros</h2>
+                        <h2 className="section-title">Datos de los viajeros</h2>
 
                         <div className="form-group">
                             <label className="form-label">Nombre del responsable *</label>
@@ -268,68 +288,65 @@ export default function ReservarPage() {
 
                         <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
 
-                        {passengers.map((passenger, index) => (
-                            <div key={index} className="passenger-card">
-                                <div className="passenger-header">
-                                    <span className="passenger-number">Pasajero {index + 1}</span>
-                                    {passenger.age !== undefined && passenger.age < 6 && (
-                                        <span style={{
-                                            background: '#e8f5e9',
-                                            color: '#2e7d32',
-                                            padding: '0.25rem 0.5rem',
-                                            borderRadius: '4px',
-                                            fontSize: '0.75rem'
-                                        }}>
-                                            Menor (no paga)
+                        {passengers.map((passenger, index) => {
+                            const isChild = passenger.age !== undefined && passenger.age < 6
+                            return (
+                                <div key={index} className="passenger-card">
+                                    <div className="passenger-header">
+                                        <span className="passenger-number">
+                                            {isChild ? `Niño ${index - adultsCount + 1}` : `Adulto ${index + 1}`}
                                         </span>
+                                        {isChild && (
+                                            <span style={{
+                                                background: '#e8f5e9',
+                                                color: '#2e7d32',
+                                                padding: '0.25rem 0.5rem',
+                                                borderRadius: '4px',
+                                                fontSize: '0.75rem'
+                                            }}>
+                                                Gratis
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                        <div>
+                                            <label className="form-label" style={{ fontSize: '0.85rem' }}>Nombre *</label>
+                                            <input
+                                                type="text"
+                                                className="form-input"
+                                                value={passenger.first_name}
+                                                onChange={(e) => updatePassenger(index, 'first_name', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="form-label" style={{ fontSize: '0.85rem' }}>Apellido *</label>
+                                            <input
+                                                type="text"
+                                                className="form-input"
+                                                value={passenger.last_name}
+                                                onChange={(e) => updatePassenger(index, 'last_name', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {isChild && (
+                                        <div style={{ marginTop: '0.75rem' }}>
+                                            <label className="form-label" style={{ fontSize: '0.85rem' }}>Edad del niño *</label>
+                                            <input
+                                                type="number"
+                                                className="form-input"
+                                                style={{ maxWidth: '100px' }}
+                                                value={passenger.age ?? ''}
+                                                onChange={(e) => updatePassenger(index, 'age', e.target.value)}
+                                                min={0}
+                                                max={5}
+                                            />
+                                        </div>
                                     )}
                                 </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                    <div>
-                                        <label className="form-label" style={{ fontSize: '0.85rem' }}>Nombre *</label>
-                                        <input
-                                            type="text"
-                                            className="form-input"
-                                            value={passenger.first_name}
-                                            onChange={(e) => updatePassenger(index, 'first_name', e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="form-label" style={{ fontSize: '0.85rem' }}>Apellido *</label>
-                                        <input
-                                            type="text"
-                                            className="form-input"
-                                            value={passenger.last_name}
-                                            onChange={(e) => updatePassenger(index, 'last_name', e.target.value)}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.75rem' }}>
-                                    <div>
-                                        <label className="form-label" style={{ fontSize: '0.85rem' }}>Congregación</label>
-                                        <input
-                                            type="text"
-                                            className="form-input"
-                                            value={passenger.congregation || ''}
-                                            onChange={(e) => updatePassenger(index, 'congregation', e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="form-label" style={{ fontSize: '0.85rem' }}>Edad</label>
-                                        <input
-                                            type="number"
-                                            className="form-input"
-                                            value={passenger.age ?? ''}
-                                            onChange={(e) => updatePassenger(index, 'age', e.target.value)}
-                                            min={0}
-                                            max={120}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                            )
+                        })}
 
                         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
                             <button
@@ -337,7 +354,7 @@ export default function ReservarPage() {
                                 style={{ flex: 1 }}
                                 onClick={() => setStep('seats')}
                             >
-                                Atrás
+                                ← Atrás
                             </button>
                             <button
                                 className="nav-button"
@@ -345,7 +362,7 @@ export default function ReservarPage() {
                                 onClick={() => setStep('summary')}
                                 disabled={!responsibleName || !responsiblePhone || passengers.some(p => !p.first_name || !p.last_name)}
                             >
-                                Siguiente
+                                Siguiente →
                             </button>
                         </div>
                     </div>
@@ -354,27 +371,29 @@ export default function ReservarPage() {
                 {/* STEP 3: Summary */}
                 {step === 'summary' && (
                     <div className="card">
-                        <h2 className="section-title">Resumen de tu reservación</h2>
+                        <h2 className="section-title">Confirma tu reservación</h2>
 
                         <div className="summary-row">
-                            <span>Total de lugares</span>
-                            <strong>{passengers.length}</strong>
+                            <span>Adultos</span>
+                            <strong>{adultsCount}</strong>
                         </div>
+                        {childrenCount > 0 && (
+                            <div className="summary-row">
+                                <span>Niños menores de 6</span>
+                                <strong>{childrenCount} (gratis)</strong>
+                            </div>
+                        )}
                         <div className="summary-row">
-                            <span>Lugares que pagan</span>
-                            <strong>{passengers.filter(p => !p.age || p.age >= 6).length}</strong>
-                        </div>
-                        <div className="summary-row">
-                            <span>Precio por lugar</span>
+                            <span>Precio por adulto</span>
                             <strong>$1,700</strong>
                         </div>
                         <div className="summary-row total">
                             <span>Total</span>
-                            <strong>${(passengers.filter(p => !p.age || p.age >= 6).length * 1700).toLocaleString('es-MX')}</strong>
+                            <strong>${totalAmount.toLocaleString('es-MX')}</strong>
                         </div>
 
                         <div className="alert alert-warning" style={{ marginTop: '1.5rem' }}>
-                            <strong>Importante:</strong> Para apartar lugares es indispensable enviar al menos el 50% del total.
+                            <strong>Importante:</strong> Para apartar lugares es necesario enviar al menos el 50% (${depositRequired.toLocaleString('es-MX')}).
                         </div>
 
                         {error && (
@@ -389,7 +408,7 @@ export default function ReservarPage() {
                                 style={{ flex: 1 }}
                                 onClick={() => setStep('passengers')}
                             >
-                                Atrás
+                                ← Atrás
                             </button>
                             <button
                                 className="nav-button"
@@ -397,7 +416,7 @@ export default function ReservarPage() {
                                 onClick={handleCreateReservation}
                                 disabled={isLoading}
                             >
-                                {isLoading ? 'Procesando...' : 'Confirmar'}
+                                {isLoading ? 'Procesando...' : 'Confirmar →'}
                             </button>
                         </div>
                     </div>
@@ -407,15 +426,11 @@ export default function ReservarPage() {
                 {step === 'payment' && result && (
                     <div className="card">
                         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--primary)' }}>
-                                Reservación creada
-                            </h2>
                             <div style={{
                                 background: 'var(--primary)',
                                 color: 'white',
                                 padding: '1rem',
-                                borderRadius: '4px',
-                                marginTop: '1rem'
+                                borderRadius: '4px'
                             }}>
                                 <div style={{ fontSize: '0.85rem', opacity: 0.9 }}>Tu código de reservación</div>
                                 <div style={{ fontSize: '1.25rem', fontWeight: '700', letterSpacing: '1px' }}>
@@ -424,26 +439,26 @@ export default function ReservarPage() {
                             </div>
                         </div>
 
-                        <h3 className="section-title">Selecciona método de pago</h3>
+                        <h3 className="section-title">¿Cómo deseas pagar?</h3>
 
                         <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', cursor: 'pointer' }}>
                                 <input
                                     type="radio"
                                     name="paymentType"
                                     checked={isDeposit}
                                     onChange={() => setIsDeposit(true)}
                                 />
-                                <span>Anticipo 50% (${result.deposit_required.toLocaleString('es-MX')})</span>
+                                <span>Anticipo 50% — <strong>${result.deposit_required.toLocaleString('es-MX')}</strong></span>
                             </label>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                                 <input
                                     type="radio"
                                     name="paymentType"
                                     checked={!isDeposit}
                                     onChange={() => setIsDeposit(false)}
                                 />
-                                <span>Pago completo (${result.total_amount.toLocaleString('es-MX')})</span>
+                                <span>Pago completo — <strong>${result.total_amount.toLocaleString('es-MX')}</strong></span>
                             </label>
                         </div>
 
@@ -453,15 +468,11 @@ export default function ReservarPage() {
                                 style={{
                                     width: '100%',
                                     background: '#009ee3',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: '0.5rem'
                                 }}
                                 onClick={handlePayWithCard}
                                 disabled={isLoading}
                             >
-                                {isLoading ? 'Redirigiendo...' : 'Pagar con tarjeta (Mercado Pago)'}
+                                {isLoading ? 'Redirigiendo...' : 'Pagar con tarjeta'}
                             </button>
 
                             <button
@@ -485,8 +496,8 @@ export default function ReservarPage() {
                 {step === 'confirmation' && result && (
                     <div className="card">
                         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                            <div style={{ fontSize: '2rem', marginBottom: '0.5rem', color: 'var(--primary)' }}>
-                                Listo
+                            <div style={{ fontSize: '2rem', marginBottom: '0.5rem', color: '#2e7d32' }}>
+                                ✓
                             </div>
                             <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>
                                 Reservación confirmada
@@ -499,20 +510,12 @@ export default function ReservarPage() {
                         </div>
 
                         <div className="summary-row">
-                            <span>Total de lugares</span>
+                            <span>Total de viajeros</span>
                             <strong>{result.seats_total}</strong>
-                        </div>
-                        <div className="summary-row">
-                            <span>Lugares que pagan</span>
-                            <strong>{result.seats_payable}</strong>
                         </div>
                         <div className="summary-row total">
                             <span>Total a pagar</span>
                             <strong>${result.total_amount.toLocaleString('es-MX')}</strong>
-                        </div>
-                        <div className="summary-row" style={{ color: 'var(--primary)' }}>
-                            <span>Anticipo mínimo (50%)</span>
-                            <strong>${result.deposit_required.toLocaleString('es-MX')}</strong>
                         </div>
 
                         {paymentMethod === 'transfer' && (
@@ -540,6 +543,9 @@ export default function ReservarPage() {
                                         <span className="bank-value">Gady Hernández</span>
                                     </div>
                                 </div>
+                                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.75rem' }}>
+                                    Envía el comprobante por WhatsApp para confirmar tu pago.
+                                </p>
                             </div>
                         )}
 
@@ -559,31 +565,8 @@ export default function ReservarPage() {
                             className="whatsapp-button"
                             style={{ marginTop: '1.5rem' }}
                         >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                            </svg>
                             Enviar información por WhatsApp
                         </a>
-
-                        <button
-                            className="nav-button secondary"
-                            style={{ width: '100%', marginTop: '0.75rem' }}
-                            onClick={() => {
-                                navigator.clipboard.writeText(buildWhatsAppMessage(
-                                    result.reservation_code,
-                                    responsibleName,
-                                    responsiblePhone,
-                                    responsibleCongregation,
-                                    passengers,
-                                    result.seats_payable,
-                                    result.total_amount,
-                                    result.deposit_required
-                                ))
-                                alert('Mensaje copiado')
-                            }}
-                        >
-                            Copiar mensaje
-                        </button>
 
                         <Link href="/" className="nav-button secondary" style={{
                             display: 'block',
