@@ -9,11 +9,11 @@ const notoSans = Noto_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Viaje a Betel 2026",
-  description: "Reserva tu lugar para el viaje a Betel - 5 de abril de 2026",
+  title: "Vamos a Betel 2026",
+  description: "Reserva tu lugar para el viaje a Betel - 7-9 de Abril 2026",
   openGraph: {
-    title: "Viaje a Betel 2026",
-    description: "Reserva tu lugar para el viaje a Betel - 5 de abril de 2026",
+    title: "Vamos a Betel 2026",
+    description: "Reserva tu lugar para el viaje a Betel - 7-9 de Abril 2026",
     type: "website",
   },
 };

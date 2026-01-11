@@ -7,14 +7,23 @@ import PaymentMethods from '@/components/PaymentMethods'
 export default function Home() {
   return (
     <main>
-      {/* Header */}
-      <header className="page-header">
-        <h1>Viaje a Betel</h1>
-        <p>5 de abril de 2026 (domingo)</p>
-      </header>
-
-      {/* Hero Carousel */}
+      {/* Hero Carousel first */}
       <HeroCarousel />
+
+      {/* Title below carousel */}
+      <header style={{
+        background: 'var(--primary)',
+        color: 'white',
+        padding: '1.5rem',
+        textAlign: 'center'
+      }}>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: '600', margin: 0 }}>
+          Vamos a Betel
+        </h1>
+        <p style={{ fontSize: '1rem', opacity: 0.95, marginTop: '0.5rem' }}>
+          7-9 de Abril 2026
+        </p>
+      </header>
 
       {/* Content */}
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1.5rem' }}>

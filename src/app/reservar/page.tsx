@@ -100,7 +100,7 @@ export default function ReservarPage() {
         <main>
             <header className="page-header">
                 <h1>Reservar Lugares</h1>
-                <p>Viaje a Betel - 5 de abril de 2026</p>
+                <p>Vamos a Betel - 7-9 de Abril 2026</p>
             </header>
 
             <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1.5rem' }}>
