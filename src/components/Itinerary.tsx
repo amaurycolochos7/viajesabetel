@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { startBackgroundMusic } from './BackgroundMusic'
 
 interface DaySchedule {
     day: string
@@ -9,7 +10,8 @@ interface DaySchedule {
 }
 
 export default function Itinerary() {
-    const [expandedDay, setExpandedDay] = useState<number | null>(0)
+    const [expandedDay, setExpandedDay] = useState<number | null>(null) // Start collapsed
+    const hasMusicStartedRef = useRef(false)
 
     const schedule: DaySchedule[] = [
         {
@@ -54,6 +56,16 @@ export default function Itinerary() {
         },
     ]
 
+    const handleDayClick = (dayIndex: number) => {
+        // Start music on first interaction
+        if (!hasMusicStartedRef.current) {
+            startBackgroundMusic()
+            hasMusicStartedRef.current = true
+        }
+
+        setExpandedDay(expandedDay === dayIndex ? null : dayIndex)
+    }
+
     return (
         <section className="card" style={{ marginBottom: '1rem' }}>
             <h2 className="section-title">Itinerario del Viaje</h2>
@@ -69,7 +81,7 @@ export default function Itinerary() {
                         }}
                     >
                         <button
-                            onClick={() => setExpandedDay(expandedDay === dayIndex ? null : dayIndex)}
+                            onClick={() => handleDayClick(dayIndex)}
                             style={{
                                 width: '100%',
                                 padding: '1rem',
@@ -127,3 +139,4 @@ export default function Itinerary() {
         </section>
     )
 }
+

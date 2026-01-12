@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { buildWhatsAppMessage, getWhatsAppLink } from '@/lib/whatsapp'
 import html2canvas from 'html2canvas'
 
-type Step = 'seats' | 'passengers' | 'summary' | 'payment' | 'confirmation'
+type Step = 'seats' | 'passengers' | 'summary' | 'terms' | 'payment' | 'confirmation'
 type PaymentMethod = 'card' | 'transfer' | null
 
 interface ReservationResult {
@@ -23,9 +23,11 @@ export default function ReservarPage() {
     const [step, setStep] = useState<Step>('seats')
     const [adultsCount, setAdultsCount] = useState(1)
     const [childrenCount, setChildrenCount] = useState(0)
+    const [infantsCount, setInfantsCount] = useState(0)
     const [passengers, setPassengers] = useState<Passenger[]>([])
     const [responsibleName, setResponsibleName] = useState('')
     const [responsibleLastName, setResponsibleLastName] = useState('')
+    const [responsibleAge, setResponsibleAge] = useState('')
     const [responsiblePhone, setResponsiblePhone] = useState('')
     const [responsibleCongregation, setResponsibleCongregation] = useState('')
     const [isLoading, setIsLoading] = useState(false)
@@ -33,11 +35,17 @@ export default function ReservarPage() {
     const [error, setError] = useState('')
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null)
     const [isDeposit, setIsDeposit] = useState(true)
+    const [termsAccepted, setTermsAccepted] = useState(false)
 
     const totalSeats = adultsCount + childrenCount
-    const seatsPayable = adultsCount
+    const seatsPayable = totalSeats
     const totalAmount = seatsPayable * 1800
     const depositRequired = totalAmount * 0.5
+
+    // Format currency with .00 decimals
+    const formatMoney = (amount: number) => {
+        return amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    }
 
     // Solo permite números y máximo 10 dígitos
     const handlePhoneChange = (value: string) => {
@@ -48,61 +56,65 @@ export default function ReservarPage() {
     const initPassengers = () => {
         const newPassengers: Passenger[] = []
 
-        // Si solo hay 1 adulto, el responsable ES ese adulto (no pedir de nuevo)
-        const startAdultIndex = adultsCount === 1 && childrenCount === 0 ? 0 : 0
-
-        // Adultos adicionales (si el responsable ya cuenta como 1)
+        // Adultos: El primero (índice 0) es el responsable
         for (let i = 0; i < adultsCount; i++) {
-            // Si es 1 solo adulto sin niños, usamos los datos del responsable
-            if (adultsCount === 1 && childrenCount === 0) {
+            if (i === 0) {
+                // Primer adulto = responsable (ya tiene datos)
                 newPassengers.push({
                     first_name: responsibleName,
                     last_name: responsibleLastName,
                     phone: responsiblePhone,
                     congregation: responsibleCongregation,
-                    age: undefined,
+                    age: Number(responsibleAge),
                     observations: '',
+                    passenger_type: 'adult',
                 })
             } else {
-                // Primer adulto = responsable
-                if (i === 0) {
-                    newPassengers.push({
-                        first_name: responsibleName,
-                        last_name: responsibleLastName,
-                        phone: responsiblePhone,
-                        congregation: responsibleCongregation,
-                        age: undefined,
-                        observations: '',
-                    })
-                } else {
-                    newPassengers.push({
-                        first_name: '',
-                        last_name: '',
-                        phone: '',
-                        congregation: '',
-                        age: undefined,
-                        observations: '',
-                    })
-                }
+                // Adultos adicionales
+                newPassengers.push({
+                    first_name: '',
+                    last_name: '',
+                    phone: '',
+                    congregation: '',
+                    age: undefined,
+                    observations: '',
+                    passenger_type: 'adult',
+                })
             }
         }
 
-        // Niños
+        // Niños (Ocupan asiento)
         for (let i = 0; i < childrenCount; i++) {
             newPassengers.push({
                 first_name: '',
                 last_name: '',
                 phone: '',
                 congregation: '',
-                age: 5,
+                age: undefined,
+                is_infant: false,
                 observations: '',
+                passenger_type: 'child',
+            })
+        }
+
+        // Bebés (En piernas, no ocupan asiento)
+        for (let i = 0; i < infantsCount; i++) {
+            newPassengers.push({
+                first_name: '',
+                last_name: '',
+                phone: '',
+                congregation: '',
+                age: undefined,
+                is_infant: true,
+                observations: '',
+                passenger_type: 'infant',
             })
         }
 
         setPassengers(newPassengers)
 
-        // Si es 1 adulto sin niños, saltar directo a resumen
-        if (adultsCount === 1 && childrenCount === 0) {
+        // Si es 1 solo adulto sin niños ni bebés, saltar directo a resumen
+        if (adultsCount === 1 && childrenCount === 0 && infantsCount === 0) {
             setStep('summary')
         } else {
             setStep('passengers')
@@ -112,9 +124,9 @@ export default function ReservarPage() {
     const updatePassenger = (index: number, field: keyof Passenger, value: string | number) => {
         const updated = [...passengers]
         if (field === 'age') {
-            updated[index][field] = value === '' ? undefined : Number(value)
+            updated[index] = { ...updated[index], [field]: value === '' ? undefined : Number(value) }
         } else {
-            updated[index][field] = value as string
+            updated[index] = { ...updated[index], [field]: value }
         }
         setPassengers(updated)
     }
@@ -171,13 +183,17 @@ export default function ReservarPage() {
         setError('')
 
         try {
+            // Apply 5% commission for MP
+            const commissionMultiplier = 1.05
+            const adjustedTotal = result.total_amount * commissionMultiplier
+
             const response = await fetch('/api/mp/create-preference', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     reservationCode: result.reservation_code,
                     responsibleName: `${responsibleName} ${responsibleLastName}`,
-                    totalAmount: result.total_amount,
+                    totalAmount: adjustedTotal,
                     seatsPayable: result.seats_payable,
                     isDeposit,
                 }),
@@ -221,9 +237,9 @@ export default function ReservarPage() {
     }
 
     const renderStepIndicator = () => {
-        const steps = adultsCount === 1 && childrenCount === 0
-            ? ['seats', 'summary', 'payment', 'confirmation']
-            : ['seats', 'passengers', 'summary', 'payment', 'confirmation']
+        const steps = adultsCount === 1 && childrenCount === 0 && infantsCount === 0
+            ? ['seats', 'summary', 'terms', 'payment', 'confirmation']
+            : ['seats', 'passengers', 'summary', 'terms', 'payment', 'confirmation']
 
         return (
             <div className="step-indicator">
@@ -266,8 +282,19 @@ export default function ReservarPage() {
                         onClick={() => {
                             if (step === 'confirmation') {
                                 setStep('payment')
-                            } else {
-                                setStep(step === 'passengers' ? 'seats' : step === 'summary' ? 'passengers' : step === 'payment' ? 'summary' : 'seats')
+                            } else if (step === 'payment') {
+                                setStep('terms')
+                            } else if (step === 'terms') {
+                                setStep('summary')
+                            } else if (step === 'summary') {
+                                // If solo user (no passengers step), go back to seats
+                                if (adultsCount === 1 && childrenCount === 0 && infantsCount === 0) {
+                                    setStep('seats')
+                                } else {
+                                    setStep('passengers')
+                                }
+                            } else if (step === 'passengers') {
+                                setStep('seats')
                             }
                         }}
                         style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}
@@ -284,7 +311,7 @@ export default function ReservarPage() {
                         <h2 className="section-title">¿Quiénes viajan?</h2>
 
                         <div style={{ marginBottom: '1.5rem' }}>
-                            <label className="form-label">Adultos ($1,700)</label>
+                            <label className="form-label">Adultos ($1,800.00)</label>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <button
                                     onClick={() => setAdultsCount(Math.max(1, adultsCount - 1))}
@@ -302,9 +329,8 @@ export default function ReservarPage() {
                             </div>
                         </div>
 
-                        {/* ... children input ... */}
                         <div style={{ marginBottom: '2rem' }}>
-                            <label className="form-label">Niños (5-11 años) ($1,700)</label>
+                            <label className="form-label">Niños (Ocupan asiento) ($1,800.00)</label>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <button
                                     onClick={() => setChildrenCount(Math.max(0, childrenCount - 1))}
@@ -320,7 +346,27 @@ export default function ReservarPage() {
                                     +
                                 </button>
                             </div>
-                            <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>Menores de 5 años no pagan (viajan en piernas).</p>
+                            <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>Niños de 5 años en adelante. Pagan boleto completo.</p>
+                        </div>
+
+                        <div style={{ marginBottom: '2rem' }}>
+                            <label className="form-label">Bebés / Infantes (No ocupan asiento) ($0.00)</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <button
+                                    onClick={() => setInfantsCount(Math.max(0, infantsCount - 1))}
+                                    style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', cursor: 'pointer', fontSize: '1.25rem' }}
+                                >
+                                    -
+                                </button>
+                                <span style={{ fontSize: '1.25rem', fontWeight: '600', minWidth: '30px', textAlign: 'center' }}>{infantsCount}</span>
+                                <button
+                                    onClick={() => setInfantsCount(Math.min(10, infantsCount + 1))}
+                                    style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid #ddd', background: 'white', cursor: 'pointer', fontSize: '1.25rem' }}
+                                >
+                                    +
+                                </button>
+                            </div>
+                            <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>Menores de 5 años viajan gratis en piernas. Se requiere registro.</p>
                         </div>
 
                         <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px', marginBottom: '2rem' }}>
@@ -330,7 +376,7 @@ export default function ReservarPage() {
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)' }}>
                                 <span>Total a pagar:</span>
-                                <span>${totalAmount.toLocaleString('es-MX')}</span>
+                                <span>${formatMoney(totalAmount)}</span>
                             </div>
                         </div>
 
@@ -357,6 +403,17 @@ export default function ReservarPage() {
                                     value={responsibleLastName}
                                     onChange={(e) => setResponsibleLastName(e.target.value)}
                                     placeholder="Apellido"
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label">Edad *</label>
+                                <input
+                                    type="number"
+                                    className="form-input"
+                                    value={responsibleAge}
+                                    onChange={(e) => setResponsibleAge(e.target.value)}
+                                    placeholder="Edad"
+                                    min={18}
                                 />
                             </div>
                         </div>
@@ -387,7 +444,7 @@ export default function ReservarPage() {
                                 className="form-input"
                                 value={responsibleCongregation}
                                 onChange={(e) => setResponsibleCongregation(e.target.value)}
-                                placeholder="Ej: Centro, Norte, Sur..."
+                                placeholder="Ej: Soyatita, Tuxtla Gutiérrez"
                             />
                         </div>
 
@@ -396,6 +453,7 @@ export default function ReservarPage() {
                                 const missing = []
                                 if (!responsibleName) missing.push('Nombre')
                                 if (!responsibleLastName) missing.push('Apellido')
+                                if (!responsibleAge) missing.push('Edad')
                                 if (!isPhoneValid) missing.push('Teléfono válido (10 dígitos)')
                                 if (!responsibleCongregation) missing.push('Congregación')
 
@@ -422,7 +480,7 @@ export default function ReservarPage() {
                         <div style={{ marginBottom: '2rem' }}>
                             <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--primary)' }}>Responsable de la reserva</h3>
                             <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
-                                <p style={{ margin: 0, fontWeight: '600' }}>{responsibleName} {responsibleLastName}</p>
+                                <p style={{ margin: 0, fontWeight: '600' }}>{responsibleName} {responsibleLastName} ({responsibleAge} años)</p>
                                 <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>{responsiblePhone}</p>
                             </div>
                         </div>
@@ -433,7 +491,12 @@ export default function ReservarPage() {
                             (idx > 0) && (
                                 <div key={idx} style={{ marginBottom: '2rem', borderTop: '1px solid #eee', paddingTop: '1.5rem' }}>
                                     <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem' }}>
-                                        {p.age !== undefined ? `Niño ${idx - adultsCount + 1}` : `Adulto ${idx + 1}`}
+                                        {p.passenger_type === 'infant'
+                                            ? `Bebé ${passengers.slice(0, idx + 1).filter(x => x.passenger_type === 'infant').length}`
+                                            : p.passenger_type === 'child'
+                                                ? `Niño ${passengers.slice(0, idx + 1).filter(x => x.passenger_type === 'child').length}`
+                                                : `Adulto ${passengers.slice(0, idx + 1).filter(x => x.passenger_type === 'adult').length}`
+                                        }
                                     </h3>
                                     <div style={{ display: 'grid', gap: '1rem' }}>
                                         <input
@@ -450,17 +513,14 @@ export default function ReservarPage() {
                                             value={p.last_name}
                                             onChange={e => updatePassenger(idx, 'last_name', e.target.value)}
                                         />
-                                        {p.age !== undefined && (
-                                            <input
-                                                type="number"
-                                                className="form-input"
-                                                placeholder="Edad"
-                                                value={p.age ?? ''}
-                                                onChange={(e) => updatePassenger(idx, 'age', e.target.value)}
-                                                min={0}
-                                                max={5}
-                                            />
-                                        )}
+                                        <input
+                                            type="number"
+                                            className="form-input"
+                                            placeholder="Edad"
+                                            value={p.age ?? ''}
+                                            onChange={(e) => updatePassenger(idx, 'age', e.target.value)}
+                                            min={0}
+                                        />
                                     </div>
                                 </div>
                             )
@@ -499,14 +559,76 @@ export default function ReservarPage() {
 
                         <div style={{ marginTop: '1.5rem' }}>
                             <button
-                                onClick={handleCreateReservation}
+                                onClick={() => setStep('terms')}
                                 className="cta-button"
                                 style={{ width: '100%' }}
-                                disabled={isLoading}
                             >
-                                {isLoading ? 'Creando reservación...' : 'Confirmar y Pagar'}
+                                Continuar
                             </button>
                         </div>
+                    </div>
+                )}
+
+                {/* STEP 4: Terms and Conditions */}
+                {step === 'terms' && (
+                    <div className="fade-in">
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#1a1a1a' }}>
+                            Términos y Condiciones
+                        </h2>
+
+
+
+                        <label style={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: '0.75rem',
+                            padding: '1rem',
+                            background: termsAccepted ? '#e8f5e9' : '#fff',
+                            border: termsAccepted ? '2px solid #4caf50' : '1px solid #e0e0e0',
+                            borderRadius: '12px',
+                            cursor: 'pointer',
+                            marginBottom: '1.5rem',
+                            transition: 'all 0.2s ease'
+                        }}>
+                            <input
+                                type="checkbox"
+                                checked={termsAccepted}
+                                onChange={(e) => setTermsAccepted(e.target.checked)}
+                                style={{
+                                    width: '20px',
+                                    height: '20px',
+                                    marginTop: '2px',
+                                    accentColor: '#4caf50'
+                                }}
+                            />
+                            <span style={{ fontSize: '0.9rem', color: '#333', lineHeight: '1.5' }}>
+                                Al registrarme, confirmo que he proporcionado información veraz, acepto las condiciones del viaje y entiendo que <strong>las entradas a parques, acuario y alimentos no están incluidos</strong> en el costo del tour.
+                            </span>
+                        </label>
+
+                        <button
+                            onClick={handleCreateReservation}
+                            className="cta-button"
+                            style={{
+                                width: '100%',
+                                opacity: termsAccepted ? 1 : 0.5,
+                                cursor: termsAccepted ? 'pointer' : 'not-allowed'
+                            }}
+                            disabled={!termsAccepted || isLoading}
+                        >
+                            {isLoading ? 'Creando reservación...' : 'Acepto y Continuar'}
+                        </button>
+
+                        {!termsAccepted && (
+                            <p style={{
+                                textAlign: 'center',
+                                fontSize: '0.85rem',
+                                color: '#e53935',
+                                marginTop: '1rem'
+                            }}>
+                                Debes aceptar los términos y condiciones para continuar
+                            </p>
+                        )}
                     </div>
                 )}
 
@@ -525,12 +647,23 @@ export default function ReservarPage() {
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
                                     <div style={{ fontSize: '0.9rem', color: '#666' }}>Total</div>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#333' }}>${totalAmount.toLocaleString('es-MX')}</div>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#333' }}>${formatMoney(totalAmount)}</div>
                                 </div>
                             </div>
                         </div>
 
                         <div style={{ marginBottom: '2rem' }}>
+                            {/* Payment Deadline Notice */}
+                            <div style={{ background: '#fff3e0', border: '1px solid #ffb74d', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                <div style={{ fontSize: '2rem' }}>⚠️</div>
+                                <div>
+                                    <h4 style={{ margin: '0 0 0.25rem 0', color: '#e65100', fontSize: '1rem', fontWeight: 'bold' }}>FECHA LÍMITE DE PAGO: 23 DE MARZO 2026</h4>
+                                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#ef6c00' }}>
+                                        Si eliges pagar el anticipo (50%), debes liquidar el resto antes de esta fecha. Contacta al administrador para tus siguientes pagos.
+                                    </p>
+                                </div>
+                            </div>
+
                             <label className="form-label" style={{ marginBottom: '1rem', display: 'block', fontWeight: '600' }}>¿Cuánto deseas pagar hoy?</label>
                             <div style={{ display: 'grid', gap: '1rem' }}>
                                 {/* Option 1: Deposit */}
@@ -564,7 +697,7 @@ export default function ReservarPage() {
                                         <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.2rem' }}>Liquidas antes del viaje</div>
                                     </div>
                                     <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: isDeposit ? 'var(--primary)' : '#333' }}>
-                                        ${result.deposit_required.toLocaleString('es-MX')}
+                                        ${formatMoney(result.deposit_required)}
                                     </div>
                                 </label>
 
@@ -599,7 +732,7 @@ export default function ReservarPage() {
                                         <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.2rem' }}>¡Dejas todo listo!</div>
                                     </div>
                                     <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: !isDeposit ? 'var(--primary)' : '#333' }}>
-                                        ${result.total_amount.toLocaleString('es-MX')}
+                                        ${formatMoney(result.total_amount)}
                                     </div>
                                 </label>
                             </div>
@@ -609,24 +742,64 @@ export default function ReservarPage() {
                             <button
                                 onClick={() => {
                                     setPaymentMethod('card')
-                                    handlePayWithCard()
                                 }}
                                 className="cta-button"
                                 style={{
-                                    background: 'linear-gradient(135deg, #009ee3 0%, #007bb0 100%)',
-                                    border: 'none',
+                                    background: paymentMethod === 'card' ? 'linear-gradient(135deg, #009ee3 0%, #007bb0 100%)' : 'white',
+                                    color: paymentMethod === 'card' ? 'white' : '#009ee3',
+                                    border: paymentMethod === 'card' ? 'none' : '2px solid #009ee3',
                                     padding: '1rem',
                                     fontSize: '1.1rem',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
-                                    boxShadow: '0 4px 6px rgba(0,158,227, 0.2)'
+                                    boxShadow: paymentMethod === 'card' ? '0 4px 6px rgba(0,158,227, 0.2)' : 'none'
                                 }}
                                 disabled={isLoading}
                             >
                                 <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                 </svg>
-                                {isLoading ? 'Procesando...' : 'Pagar con Tarjeta'}
+                                {isLoading ? 'Procesando...' : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.2' }}>
+                                        <span>Pagar con Tarjeta (Mercado Pago)</span>
+                                        <span style={{ fontSize: '0.85rem', opacity: 0.9, fontWeight: 'normal' }}>(+ 5% de comisión)</span>
+                                    </div>
+                                )}
                             </button>
+
+                            {/* Commission/Total Display for Card */}
+                            {paymentMethod === 'card' && (
+                                <div className="fade-in" style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px', border: '1px solid #e9ecef', marginTop: '-0.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: '#666' }}>
+                                        <span>Monto a pagar:</span>
+                                        <span>${formatMoney(isDeposit ? result.deposit_required : result.total_amount)}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: '#666' }}>
+                                        <span>Comisión por tarjeta (5%):</span>
+                                        <span>${formatMoney((isDeposit ? result.deposit_required : result.total_amount) * 0.05)}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #dee2e6', fontWeight: 'bold', color: '#333', fontSize: '1.1rem' }}>
+                                        <span>Total a cobrar:</span>
+                                        <span>${formatMoney((isDeposit ? result.deposit_required : result.total_amount) * 1.05)}</span>
+                                    </div>
+
+                                    <button
+                                        onClick={handlePayWithCard}
+                                        style={{
+                                            width: '100%',
+                                            marginTop: '1rem',
+                                            padding: '0.75rem',
+                                            background: '#009ee3',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontWeight: '600'
+                                        }}
+                                    >
+                                        Confirmar Pago con Tarjeta
+                                    </button>
+                                </div>
+                            )}
 
                             <button
                                 onClick={handlePayWithTransfer}
@@ -645,7 +818,10 @@ export default function ReservarPage() {
                                 <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                                 </svg>
-                                Pagar con Transferencia
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.2' }}>
+                                    <span>Pagar con Transferencia</span>
+                                    <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>(Sin comisión)</span>
+                                </div>
                             </button>
                         </div>
                         {error && <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '1rem', borderRadius: '8px', marginTop: '1rem', textAlign: 'center', border: '1px solid #fca5a5' }}>{error}</div>}
@@ -785,7 +961,7 @@ export default function ReservarPage() {
                     </div>
                 )}
             </div>
-        </main>
+        </main >
     )
 }
 
@@ -863,7 +1039,7 @@ function ReservationTicket({ result, passengers, responsibleName, responsibleLas
                 <div>
                     <p style={{ margin: 0, opacity: 0.9 }}>Total a Pagar</p>
                     <p style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>
-                        ${totalAmount.toLocaleString('es-MX')}
+                        ${totalAmount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
@@ -873,6 +1049,19 @@ function ReservationTicket({ result, passengers, responsibleName, responsibleLas
                     </p>
                 </div>
             </div>
+
+            {/* Deadline Notice in Ticket */}
+            {isDeposit && (
+                <div style={{ marginTop: '1.5rem', background: '#fff3e0', border: '2px solid #ff9800', borderRadius: '8px', padding: '1rem', textAlign: 'center' }}>
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#e65100', fontWeight: 'bold', textTransform: 'uppercase' }}>⚠️ INFORMACIÓN IMPORTANTE DE PAGO ⚠️</p>
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '1.2rem', fontWeight: '800', color: '#ef6c00' }}>
+                        FECHA LÍMITE: 23 de Marzo, 2026
+                    </p>
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#7e3c00' }}>
+                        Debes liquidar el total del viaje antes de esta fecha.
+                    </p>
+                </div>
+            )}
             <p style={{ textAlign: 'center', marginTop: '2rem', color: '#999', fontSize: '0.9rem' }}>
                 Guarda este ticket para cualquier aclaración.<br />
                 <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Dudas o comprobantes: 961 872 0544</span>

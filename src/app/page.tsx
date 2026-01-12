@@ -3,6 +3,7 @@ import HeroCarousel from '@/components/HeroCarousel'
 import Itinerary from '@/components/Itinerary'
 import CostRules from '@/components/CostRules'
 import ReservationLookup from '@/components/ReservationLookup'
+import ExtraActivities from '@/components/ExtraActivities'
 
 export default function Home() {
   return (
@@ -29,6 +30,10 @@ export default function Home() {
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '1.5rem' }}>
         <Itinerary />
         <CostRules />
+
+        {/* New Section */}
+        <ExtraActivities />
+
         <ReservationLookup />
 
         {/* Contact CTA */}

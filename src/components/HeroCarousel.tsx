@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 
-const images = ['/betel-1.png', '/betel-2.jpg', '/aztlan-1.jpg', '/aztlan-2.jpg']
+const images = ['/betel-1.png', '/betel-2.jpg']
 
 export default function HeroCarousel() {
     const [current, setCurrent] = useState(0)
@@ -26,8 +26,11 @@ export default function HeroCarousel() {
                     style={{
                         opacity: index === current ? 1 : 0,
                         position: 'absolute',
+                        objectFit: 'cover',
                         transition: 'opacity 0.7s ease-in-out',
                     }}
+                    quality={100}
+                    sizes="100vw"
                     priority={index === 0}
                 />
             ))}

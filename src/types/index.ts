@@ -5,6 +5,8 @@ export interface Passenger {
     congregation?: string
     age?: number
     observations?: string
+    is_infant?: boolean
+    passenger_type?: 'adult' | 'child' | 'infant'
 }
 
 export interface ReservationData {

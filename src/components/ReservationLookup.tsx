@@ -25,6 +25,14 @@ interface ReservationInfo {
         is_free_under6: boolean
         seat_number?: string
     }[]
+    ticket_orders?: {
+        id: string
+        items: any[]
+        total_amount: number
+        status: string
+        payment_method: string
+        created_at: string
+    }[]
 }
 
 // Icons
@@ -91,9 +99,17 @@ export default function ReservationLookup() {
                 .select('first_name, last_name, age, is_free_under6, seat_number')
                 .eq('reservation_id', resData.id)
 
+            // Get ticket orders
+            const { data: ticketOrdersData } = await supabase
+                .from('ticket_orders')
+                .select('id, items, total_amount, status, payment_method, created_at')
+                .eq('reservation_id', resData.id)
+                .order('created_at', { ascending: false })
+
             setReservation({
                 ...resData,
-                passengers: passengersData || []
+                passengers: passengersData || [],
+                ticket_orders: ticketOrdersData || []
             })
         } catch (err) {
             console.error(err)
@@ -416,7 +432,7 @@ export default function ReservationLookup() {
                                             color: p.is_free_under6 ? '#2e7d32' : '#78909c',
                                             fontWeight: '500'
                                         }}>
-                                            {p.is_free_under6 ? 'Menor (Gratis)' : p.age !== undefined ? `Niño (${p.age})` : 'Adulto'}
+                                            {p.is_free_under6 ? 'Menor (Gratis)' : (p.age !== undefined && p.age !== null ? `Niño (${p.age})` : 'Adulto')}
                                         </span>
                                     </div>
                                 </div>
@@ -424,10 +440,67 @@ export default function ReservationLookup() {
                         </div>
                     </div>
 
+                    {/* Tourist Attractions Section */}
+                    {reservation.ticket_orders && reservation.ticket_orders.length > 0 && (
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <h3 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.75rem', color: '#546e7a', textTransform: 'uppercase' }}>
+                                🎟️ Entradas a Centros Turísticos
+                            </h3>
+                            <div style={{ background: '#ffffff', border: '1px solid #eceff1', borderRadius: '8px', overflow: 'hidden' }}>
+                                {reservation.ticket_orders.map((order, idx) => (
+                                    <div
+                                        key={order.id}
+                                        style={{
+                                            padding: '1rem',
+                                            borderBottom: idx < reservation.ticket_orders!.length - 1 ? '1px solid #eceff1' : 'none'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', alignItems: 'center' }}>
+                                            <div>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: '600', color: '#37474f' }}>
+                                                    Orden del {new Date(order.created_at).toLocaleDateString('es-MX')}
+                                                </div>
+                                                <div style={{ fontSize: '0.75rem', color: '#78909c' }}>
+                                                    {order.payment_method === 'card' ? 'MercadoPago' : 'Transferencia'}
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#10b981' }}>
+                                                    ${order.total_amount.toLocaleString('es-MX')}
+                                                </div>
+                                                <span style={{
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: '600',
+                                                    textTransform: 'uppercase',
+                                                    padding: '0.15rem 0.4rem',
+                                                    borderRadius: '4px',
+                                                    background: order.status === 'paid' ? '#dcfce7' : '#fef3c7',
+                                                    color: order.status === 'paid' ? '#166534' : '#d97706'
+                                                }}>
+                                                    {order.status === 'paid' ? 'PAGADO' : 'PENDIENTE'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div style={{ background: '#fafafa', padding: '0.75rem', borderRadius: '6px', fontSize: '0.85rem' }}>
+                                            {order.items.map((item: any, i: number) => (
+                                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: i < order.items.length - 1 ? '0.25rem' : 0 }}>
+                                                    <span style={{ color: '#455a64' }}>
+                                                        <strong style={{ color: '#263238' }}>{item.passengerName}</strong> — {item.name} ({item.variantName})
+                                                    </span>
+                                                    <span style={{ fontWeight: '600' }}>${item.price}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Payment Info */}
                     <div style={{ marginBottom: '1.5rem' }}>
                         <h3 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.75rem', color: '#546e7a', textTransform: 'uppercase' }}>
-                            Resumen de Pago
+                            Resumen de Pago del Viaje
                         </h3>
                         <div style={{ background: '#fafafa', border: '1px solid #eceff1', padding: '1rem', borderRadius: '8px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
@@ -454,6 +527,21 @@ export default function ReservationLookup() {
                                     <span style={{ fontSize: '0.85rem', color: '#c62828', fontWeight: '500' }}>
                                         Resta: ${(reservation.total_amount - reservation.amount_paid).toLocaleString('es-MX')}
                                     </span>
+                                </div>
+                            )}
+
+                            {/* Deadline Notice */}
+                            {reservation.status !== 'pagado_completo' && (
+                                <div style={{ marginTop: '1rem', background: '#fff3e0', border: '1px solid #ffe0b2', borderRadius: '6px', padding: '0.75rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                                    <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                                    <div>
+                                        <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', fontWeight: 'bold', color: '#e65100' }}>
+                                            FECHA LÍMITE DE PAGO: 23 DE MARZO 2026
+                                        </p>
+                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#ef6c00' }}>
+                                            Contacta al administrador para liquidar tu viaje antes de esta fecha.
+                                        </p>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -606,6 +694,20 @@ function TicketTemplate({ reservation }: { reservation: ReservationInfo }) {
                     </p>
                 </div>
             </div>
+
+            {/* Payment Deadline Notice - Only show if not fully paid */}
+            {reservation.status !== 'pagado_completo' && (
+                <div style={{ marginTop: '1.5rem', background: '#fff3e0', border: '2px solid #ff9800', borderRadius: '8px', padding: '1rem', textAlign: 'center' }}>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#e65100', fontWeight: '700', textTransform: 'uppercase' }}>⚠️ FECHA LÍMITE DE PAGO ⚠️</p>
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '1.1rem', fontWeight: '800', color: '#ef6c00' }}>
+                        23 de Marzo, 2026
+                    </p>
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#7e3c00', lineHeight: '1.4' }}>
+                        Debes completar el pago del viaje antes de esta fecha.<br />
+                        Contacta al administrador por WhatsApp para realizar tu pago.
+                    </p>
+                </div>
+            )}
 
             <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
                 <p style={{ fontSize: '0.8rem', color: '#b0bec5', margin: 0 }}>Este documento sirve como comprobante de tu reservación para el viaje.</p>

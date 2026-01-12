@@ -165,7 +165,7 @@ export default function AdminDashboard() {
                             <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600', marginTop: '0.25rem' }}>LUGARES TOTALES</div>
                         </div>
                         <div style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-                            <div style={{ fontSize: '2rem', fontWeight: '800', color: '#2e7d32', lineHeight: 1 }}>${(stats.totalPaid / 1000).toFixed(1)}k</div>
+                            <div style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)', fontWeight: '800', color: '#2e7d32', lineHeight: 1, wordBreak: 'break-all' }}>${stats.totalPaid.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                             <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600', marginTop: '0.25rem' }}>PAGADO</div>
                         </div>
                         <div style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>

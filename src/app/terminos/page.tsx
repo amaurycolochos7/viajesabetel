@@ -40,6 +40,93 @@ export default function TerminosPage() {
                 <div className="card" style={{ background: 'white', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
                     <div style={{ display: 'grid', gap: '1.5rem', color: '#2c3e50', lineHeight: '1.6' }}>
 
+                        {/* NUEVOS TÉRMINOS */}
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ background: '#f3e5f5', padding: '0.5rem', borderRadius: '50%', color: '#7b1fa2', marginTop: '0.25rem' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4v-4z" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
+                            </div>
+                            <div>
+                                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', fontWeight: '600' }}>Ruido y Descanso (Viaje Nocturno)</h3>
+                                <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#455a64' }}>
+                                    <li>Mantener volumen bajo de música y videos.</li>
+                                    <li>Uso de audífonos obligatorio.</li>
+                                    <li>Respetar el descanso de los demás pasajeros durante la noche.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ background: '#e0f2f1', padding: '0.5rem', borderRadius: '50%', color: '#00695c', marginTop: '0.25rem' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
+                            </div>
+                            <div>
+                                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', fontWeight: '600' }}>Limpieza y Cuidado del Autobús</h3>
+                                <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#455a64' }}>
+                                    <li>Mantener el autobús limpio.</li>
+                                    <li>No tirar basura en pasillos o asientos.</li>
+                                    <li>Cualquier daño ocasionado será responsabilidad del pasajero.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ background: '#fff3e0', padding: '0.5rem', borderRadius: '50%', color: '#e65100', marginTop: '0.25rem' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>
+                            </div>
+                            <div>
+                                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', fontWeight: '600' }}>Paradas y Puntos de Reunión</h3>
+                                <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#455a64' }}>
+                                    <li>No alejarse del área asignada en paradas.</li>
+                                    <li>Respetar el tiempo indicado para regresar al autobús.</li>
+                                    <li>Avisar al coordinador antes de retirarse del grupo.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ background: '#fce4ec', padding: '0.5rem', borderRadius: '50%', color: '#880e4f', marginTop: '0.25rem' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                            </div>
+                            <div>
+                                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', fontWeight: '600' }}>Responsabilidad Personal</h3>
+                                <p style={{ margin: '0 0 0.5rem 0', color: '#455a64' }}>Cada pasajero es responsable de:</p>
+                                <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#455a64' }}>
+                                    <li>Sus pertenencias</li>
+                                    <li>Sus documentos</li>
+                                    <li>Sus gastos personales (entradas, alimentos, etc.)</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ background: '#e8eaf6', padding: '0.5rem', borderRadius: '50%', color: '#1a237e', marginTop: '0.25rem' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>
+                            </div>
+                            <div>
+                                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', fontWeight: '600' }}>Seguridad y Cooperación</h3>
+                                <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#455a64' }}>
+                                    <li>Seguir en todo momento las indicaciones del coordinador.</li>
+                                    <li>Avisar de inmediato cualquier malestar, emergencia o situación especial.</li>
+                                    <li>Cooperar para que el viaje sea seguro y armonioso.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <hr style={{ margin: '1rem 0', border: 'none', borderTop: '1px solid #eee' }} />
+
+
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                            <div style={{ background: '#ede7f6', padding: '0.5rem', borderRadius: '50%', color: '#673ab7', marginTop: '0.25rem' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><line x1="10" y1="9" x2="8" y2="9" /></svg>
+                            </div>
+                            <div>
+                                <h3 style={{ margin: '0 0 0.5rem', fontSize: '1.1rem', fontWeight: '600' }}>Directriz Médica</h3>
+                                <p style={{ margin: 0, color: '#455a64' }}>
+                                    Es indispensable que cada viajero lleve su <strong>Directriz Médica actualizada</strong>.
+                                </p>
+                            </div>
+                        </div>
+
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
                             <div style={{ background: '#e3f2fd', padding: '0.5rem', borderRadius: '50%', color: '#1976d2', marginTop: '0.25rem' }}>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>

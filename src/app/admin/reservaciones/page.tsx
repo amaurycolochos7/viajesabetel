@@ -254,13 +254,13 @@ export default function ReservacionesPage() {
                                         <div>
                                             <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase' }}>Pagado</div>
                                             <div style={{ fontSize: '0.95rem', color: r.amount_paid > 0 ? '#10b981' : '#94a3b8', fontWeight: '700' }}>
-                                                ${r.amount_paid > 0 ? (r.amount_paid / 1000).toFixed(1) + 'k' : '0'}
+                                                ${r.amount_paid > 0 ? r.amount_paid.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
                                             </div>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
                                             <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase' }}>Total</div>
                                             <div style={{ fontSize: '0.95rem', color: '#1e293b', fontWeight: '800' }}>
-                                                ${(r.total_amount / 1000).toFixed(1)}k
+                                                ${r.total_amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                             </div>
                                         </div>
                                     </div>

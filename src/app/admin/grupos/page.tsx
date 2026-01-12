@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 interface TourGroup {
     id: string
@@ -12,6 +14,12 @@ interface TourGroup {
     max_members: number
     notes: string | null
     created_at: string
+    bethel_code?: string
+    captain_id?: string
+    captain?: {
+        first_name: string
+        last_name: string
+    }
 }
 
 interface EligiblePassenger {
@@ -29,6 +37,7 @@ interface GroupMember {
     passenger_id: string
     passenger_first_name: string
     passenger_last_name: string
+    passenger_age: number | null
     reservation_code: string
 }
 
@@ -41,11 +50,26 @@ export default function TourGroupsPage() {
 
     const [newGroupName, setNewGroupName] = useState('')
     const [newGroupDatetime, setNewGroupDatetime] = useState('')
+    const [newGroupBethelCode, setNewGroupBethelCode] = useState('')
     const [isCreating, setIsCreating] = useState(false)
 
     const [selectedGroup, setSelectedGroup] = useState<TourGroup | null>(null)
     const [groupMembers, setGroupMembers] = useState<GroupMember[]>([])
     const [selectedPassengers, setSelectedPassengers] = useState<string[]>([])
+
+    // Helper to format Date for input (YYYY-MM-DDTHH:mm)
+    const formatForInput = (isoString: string | null) => {
+        if (!isoString) return ''
+        const date = new Date(isoString)
+        const pad = (n: number) => n.toString().padStart(2, '0')
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+    }
+
+    // Helper to format Input to ISO for DB
+    const formatForDB = (localString: string) => {
+        if (!localString) return null
+        return new Date(localString).toISOString()
+    }
 
     useEffect(() => {
         checkAuthAndLoadData()
@@ -66,9 +90,13 @@ export default function TourGroupsPage() {
 
     const loadData = async () => {
         // Load groups
+        // Load groups
         const { data: groupsData } = await supabase
             .from('tour_groups')
-            .select('*')
+            .select(`
+                *,
+                captain:captain_id(first_name, last_name)
+            `)
             .order('tour_datetime', { ascending: true })
 
         if (groupsData) {
@@ -119,7 +147,7 @@ export default function TourGroupsPage() {
             .select(`
         id,
         passenger_id,
-        reservation_passengers!inner(first_name, last_name),
+        reservation_passengers!inner(first_name, last_name, age),
         reservations!inner(reservation_code)
       `)
             .eq('group_id', groupId)
@@ -131,6 +159,7 @@ export default function TourGroupsPage() {
                 passenger_id: m.passenger_id,
                 passenger_first_name: m.reservation_passengers?.first_name || '',
                 passenger_last_name: m.reservation_passengers?.last_name || '',
+                passenger_age: m.reservation_passengers?.age,
                 reservation_code: m.reservations?.reservation_code || '',
             })))
         }
@@ -150,13 +179,15 @@ export default function TourGroupsPage() {
                 .from('tour_groups')
                 .insert({
                     group_name: newGroupName,
-                    tour_datetime: newGroupDatetime || null,
+                    tour_datetime: formatForDB(newGroupDatetime),
+                    bethel_code: newGroupBethelCode || null,
                 })
 
             if (error) throw error
 
             setNewGroupName('')
             setNewGroupDatetime('')
+            setNewGroupBethelCode('')
             await loadData()
         } catch (err) {
             console.error(err)
@@ -245,12 +276,12 @@ export default function TourGroupsPage() {
         try {
             const { error } = await supabase
                 .from('tour_groups')
-                .update({ tour_datetime: datetime || null })
+                .update({ tour_datetime: formatForDB(datetime) })
                 .eq('id', selectedGroup.id)
 
             if (error) throw error
 
-            setSelectedGroup({ ...selectedGroup, tour_datetime: datetime })
+            setSelectedGroup({ ...selectedGroup, tour_datetime: formatForDB(datetime) || null })
             await loadData()
         } catch (err) {
             console.error(err)
@@ -277,6 +308,50 @@ export default function TourGroupsPage() {
         }
     }
 
+    const handleUpdateBethelCode = async (code: string) => {
+        if (!selectedGroup) return
+
+        try {
+            const { error } = await supabase
+                .from('tour_groups')
+                .update({ bethel_code: code || null })
+                .eq('id', selectedGroup.id)
+
+            if (error) throw error
+
+            setSelectedGroup({ ...selectedGroup, bethel_code: code })
+            await loadData()
+        } catch (err) {
+            console.error(err)
+            alert('Error al actualizar código Bethel')
+        }
+    }
+
+    const handleUpdateCaptain = async (captainId: string) => {
+        if (!selectedGroup) return
+
+        try {
+            const { error } = await supabase
+                .from('tour_groups')
+                .update({ captain_id: captainId || null })
+                .eq('id', selectedGroup.id)
+
+            if (error) throw error
+
+            // Find captain name
+            const captainMember = groupMembers.find(m => m.passenger_id === captainId)
+            const captainData = captainMember
+                ? { first_name: captainMember.passenger_first_name, last_name: captainMember.passenger_last_name }
+                : undefined
+
+            setSelectedGroup({ ...selectedGroup, captain_id: captainId, captain: captainData })
+            await loadData()
+        } catch (err) {
+            console.error(err)
+            alert('Error al actualizar capitán')
+        }
+    }
+
     const handleDeleteGroup = async (groupId: string) => {
         if (!confirm('¿Estás seguro de eliminar este grupo?')) return
 
@@ -300,6 +375,131 @@ export default function TourGroupsPage() {
     const getPublicLink = () => {
         const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
         return `${baseUrl}/mi-grupo`
+    }
+
+    const handleDownloadPDF = () => {
+        if (!selectedGroup || groupMembers.length === 0) return
+
+        const doc = new jsPDF()
+        const pageWidth = doc.internal.pageSize.width
+        const darkColor = [30, 41, 59] as [number, number, number] // #1e293b
+
+        // --- Header Background ---
+        doc.setFillColor(darkColor[0], darkColor[1], darkColor[2])
+        doc.rect(0, 0, pageWidth, 40, 'F')
+
+        // --- Header Text ---
+        doc.setTextColor(255, 255, 255)
+        doc.setFontSize(22)
+        doc.setFont('helvetica', 'bold')
+        doc.text('REPORTE DE GRUPO', 14, 20)
+
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.text('VIAJE A BETEL 2026', 14, 28)
+
+        // --- Group Info Box ---
+        const startY = 55
+
+        // Group Name
+        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2])
+        doc.setFontSize(16)
+        doc.setFont('helvetica', 'bold')
+        doc.text(`Grupo: ${selectedGroup.group_name}`, 14, startY)
+
+        // Reset font for details
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(50)
+
+        let currentY = startY + 8
+
+        // Bethel Code
+        if (selectedGroup.bethel_code) {
+            doc.setFont('helvetica', 'bold')
+            doc.text(`Código Bethel: ${selectedGroup.bethel_code}`, 14, currentY)
+            doc.setFont('helvetica', 'normal') // reset
+            currentY += 8
+        }
+
+        // Captain
+        if (selectedGroup.captain) {
+            doc.text(`Capitán: ${selectedGroup.captain.first_name} ${selectedGroup.captain.last_name}`, 14, currentY)
+            currentY += 8
+        }
+
+        // Date
+        const dateStr = selectedGroup.tour_datetime
+            ? new Date(selectedGroup.tour_datetime).toLocaleString('es-MX', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            })
+            : 'Sin fecha asignada'
+
+        // Capitalize date
+        const formattedDate = dateStr.charAt(0).toUpperCase() + dateStr.slice(1)
+
+        doc.text(`Fecha y Horario: ${formattedDate}`, 14, currentY)
+        currentY += 8
+
+        doc.text(`Total de personas: ${groupMembers.length} / ${selectedGroup.max_members}`, 14, currentY)
+        currentY += 12 // Space before table
+
+        // --- Table ---
+        const tableData = groupMembers.map((m, index) => [
+            index + 1,
+            m.passenger_first_name,
+            m.passenger_last_name,
+            m.passenger_age !== undefined && m.passenger_age !== null ? m.passenger_age : '-',
+            m.reservation_code
+        ])
+
+        autoTable(doc, {
+            head: [['No.', 'NOMBRE', 'APELLIDOS', 'EDAD', 'CÓDIGO DE RESERVA']],
+            body: tableData,
+            startY: currentY,
+            theme: 'grid',
+            headStyles: {
+                fillColor: darkColor,
+                textColor: [255, 255, 255],
+                fontSize: 10,
+                fontStyle: 'bold',
+                halign: 'center',
+                minCellHeight: 12,
+                valign: 'middle'
+            },
+            bodyStyles: {
+                fontSize: 10,
+                cellPadding: 6,
+                textColor: [51, 65, 85]
+            },
+            columnStyles: {
+                0: { halign: 'center', cellWidth: 15 }, // No.
+                3: { halign: 'center', cellWidth: 20 }, // Edad
+                4: { fontStyle: 'bold', halign: 'center' } // Code
+            },
+            alternateRowStyles: {
+                fillColor: [248, 250, 252]
+            },
+            didDrawPage: (data) => {
+                // Footer
+                doc.setFontSize(8)
+                doc.setTextColor(150)
+                doc.text(
+                    `Generado el ${new Date().toLocaleString('es-MX')}`,
+                    14,
+                    doc.internal.pageSize.height - 10
+                )
+                doc.text(
+                    `Página ${data.pageNumber}`,
+                    pageWidth - 25,
+                    doc.internal.pageSize.height - 10
+                )
+            }
+        })
+
+        const fileName = `Grupo-${selectedGroup.group_name.replace(/\s+/g, '-')}.pdf`
+        doc.save(fileName)
     }
 
     if (isLoading) {
@@ -412,6 +612,15 @@ export default function TourGroupsPage() {
                                     onChange={(e) => setNewGroupDatetime(e.target.value)}
                                 />
                             </div>
+                            <div style={{ marginBottom: '1.25rem' }}>
+                                <input
+                                    type="text"
+                                    style={{ width: '100%', padding: '0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', boxSizing: 'border-box' }}
+                                    placeholder="Código Bethel (Opcional)"
+                                    value={newGroupBethelCode}
+                                    onChange={(e) => setNewGroupBethelCode(e.target.value)}
+                                />
+                            </div>
                             <button
                                 onClick={handleCreateGroup}
                                 disabled={isCreating || !newGroupName.trim()}
@@ -467,7 +676,7 @@ export default function TourGroupsPage() {
                                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                                                     {new Date(group.tour_datetime).toLocaleString('es-MX', {
                                                         weekday: 'short', day: 'numeric', month: 'short',
-                                                        hour: '2-digit', minute: '2-digit', timeZone: 'UTC'
+                                                        hour: '2-digit', minute: '2-digit'
                                                     })}
                                                 </div>
                                             ) : (
@@ -515,12 +724,39 @@ export default function TourGroupsPage() {
                                         </div>
                                     </div>
 
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Código Bethel</label>
+                                        <input
+                                            type="text"
+                                            style={{ width: '100%', padding: '0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '1rem', color: '#334155' }}
+                                            value={selectedGroup.bethel_code || ''}
+                                            onChange={(e) => handleUpdateBethelCode(e.target.value)}
+                                            placeholder="Ingresa código..."
+                                        />
+                                    </div>
+
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Capitán del Grupo</label>
+                                        <select
+                                            style={{ width: '100%', padding: '0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '1rem', color: '#334155' }}
+                                            value={selectedGroup.captain_id || ''}
+                                            onChange={(e) => handleUpdateCaptain(e.target.value)}
+                                        >
+                                            <option value="">-- Sin Capitán --</option>
+                                            {groupMembers.map(member => (
+                                                <option key={member.passenger_id} value={member.passenger_id}>
+                                                    {member.passenger_first_name} {member.passenger_last_name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
                                     <div style={{ marginBottom: '2rem' }}>
                                         <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Horario del tour</label>
                                         <input
                                             type="datetime-local"
                                             style={{ width: '100%', padding: '0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '1rem', color: '#334155' }}
-                                            value={selectedGroup.tour_datetime?.slice(0, 16) || ''}
+                                            value={formatForInput(selectedGroup.tour_datetime)}
                                             onChange={(e) => handleUpdateDatetime(e.target.value)}
                                         />
                                     </div>
@@ -546,6 +782,31 @@ export default function TourGroupsPage() {
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
                                         Eliminar Grupo
+                                    </button>
+
+                                    <button
+                                        onClick={handleDownloadPDF}
+                                        disabled={groupMembers.length === 0}
+                                        style={{
+                                            padding: '0.75rem',
+                                            background: '#3b82f6',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            cursor: groupMembers.length === 0 ? 'not-allowed' : 'pointer',
+                                            fontSize: '0.9rem',
+                                            fontWeight: '700',
+                                            width: '100%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '0.5rem',
+                                            marginTop: '1rem',
+                                            opacity: groupMembers.length === 0 ? 0.6 : 1
+                                        }}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                                        Descargar PDF
                                     </button>
                                 </div>
 
@@ -579,7 +840,12 @@ export default function TourGroupsPage() {
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                                         <span style={{ color: '#cbd5e1', fontWeight: '700', fontSize: '1.2rem', minWidth: '24px' }}>{idx + 1}</span>
                                                         <div>
-                                                            <strong style={{ color: '#334155', display: 'block', fontSize: '1rem' }}>{member.passenger_first_name} {member.passenger_last_name}</strong>
+                                                            <strong style={{ color: '#334155', display: 'block', fontSize: '1rem' }}>
+                                                                {member.passenger_first_name} {member.passenger_last_name}
+                                                                {member.passenger_id === selectedGroup.captain_id && (
+                                                                    <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', background: '#fef3c7', color: '#d97706', padding: '2px 6px', borderRadius: '4px', border: '1px solid #fcd34d' }}>CAPITÁN</span>
+                                                                )}
+                                                            </strong>
                                                             <span style={{ color: '#64748b', fontSize: '0.8rem', fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>
                                                                 {member.reservation_code}
                                                             </span>

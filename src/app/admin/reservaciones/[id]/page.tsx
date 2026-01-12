@@ -6,12 +6,22 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Reservation, ReservationPassenger, Payment } from '@/types'
 
+interface TicketOrder {
+    id: string
+    items: any[]
+    total_amount: number
+    status: string
+    payment_method: string
+    created_at: string
+}
+
 export default function ReservacionDetailPage() {
     const router = useRouter()
     const params = useParams()
     const [reservation, setReservation] = useState<Reservation | null>(null)
     const [passengers, setPassengers] = useState<ReservationPassenger[]>([])
     const [payments, setPayments] = useState<Payment[]>([])
+    const [ticketOrders, setTicketOrders] = useState<TicketOrder[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
     const [paymentAmount, setPaymentAmount] = useState('')
@@ -64,6 +74,16 @@ export default function ReservacionDetailPage() {
 
         if (paymentsData) {
             setPayments(paymentsData as Payment[])
+        }
+
+        const { data: ticketsData } = await supabase
+            .from('ticket_orders')
+            .select('*')
+            .eq('reservation_id', params.id)
+            .order('created_at', { ascending: false })
+
+        if (ticketsData) {
+            setTicketOrders(ticketsData)
         }
 
         setIsLoading(false)
@@ -160,6 +180,23 @@ export default function ReservacionDetailPage() {
         } catch (err) {
             console.error(err)
             alert('Error al asignar el asiento')
+        }
+    }
+
+    const handleApproveTicketOrder = async (orderId: string) => {
+        try {
+            const { error } = await supabase
+                .from('ticket_orders')
+                .update({ status: 'paid' })
+                .eq('id', orderId)
+
+            if (error) throw error
+
+            setTicketOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'paid' } : o))
+            alert('Pago de entradas aprobado')
+        } catch (err) {
+            console.error(err)
+            alert('Error al aprobar pago de entradas')
         }
     }
 
@@ -415,22 +452,20 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                                             <span style={{ fontWeight: '600', color: '#94a3b8', fontSize: '0.9rem' }}>{index + 1}.</span>
                                             <strong style={{ color: '#334155', fontSize: '1rem' }}>{passenger.first_name} {passenger.last_name}</strong>
-                                        </div>
-                                        {passenger.congregation && (
-                                            <div style={{ color: '#64748b', fontSize: '0.85rem', paddingLeft: '1.4rem' }}>{passenger.congregation}</div>
-                                        )}
-                                        <div style={{ paddingLeft: '1.4rem', marginTop: '0.25rem', display: 'flex', gap: '0.5rem' }}>
                                             {passenger.age !== null && passenger.age !== undefined && (
-                                                <span style={{ fontSize: '0.75rem', color: '#64748b', background: '#e2e8f0', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#475569', background: '#e0e7ff', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: '600' }}>
                                                     {passenger.age} años
                                                 </span>
                                             )}
                                             {passenger.is_free_under6 && (
-                                                <span style={{ fontSize: '0.75rem', color: '#166534', background: '#dcfce7', padding: '0.1rem 0.4rem', borderRadius: '4px', fontWeight: '600' }}>
+                                                <span style={{ fontSize: '0.75rem', color: '#166534', background: '#dcfce7', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: '600' }}>
                                                     Gratis
                                                 </span>
                                             )}
                                         </div>
+                                        {passenger.congregation && (
+                                            <div style={{ color: '#64748b', fontSize: '0.85rem', paddingLeft: '1.4rem' }}>{passenger.congregation}</div>
+                                        )}
                                     </div>
 
                                     {/* Seat Assignment */}
@@ -459,6 +494,77 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                             ))}
                         </div>
                     </div>
+
+                    {/* Ticket Orders Section */}
+                    {ticketOrders.length > 0 && (
+                        <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)' }}>
+                            <h2 style={{ fontWeight: '700', marginBottom: '1.25rem', fontSize: '1.1rem', color: '#1e293b' }}>Entradas a Centros Turísticos</h2>
+                            <div style={{ display: 'grid', gap: '1rem' }}>
+                                {ticketOrders.map(order => (
+                                    <div key={order.id} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', background: '#f8fafc' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                                            <div>
+                                                <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>
+                                                    Orden del {new Date(order.created_at).toLocaleDateString('es-MX')}
+                                                </div>
+                                                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                                    {order.payment_method === 'card' ? 'Mercado Pago' : 'Transferencia'}
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#10b981' }}>
+                                                    ${order.total_amount.toLocaleString('es-MX')}
+                                                </div>
+                                                <span style={{
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: '700',
+                                                    textTransform: 'uppercase',
+                                                    padding: '0.2rem 0.5rem',
+                                                    borderRadius: '4px',
+                                                    background: order.status === 'paid' ? '#dcfce7' : '#fef3c7',
+                                                    color: order.status === 'paid' ? '#166534' : '#d97706'
+                                                }}>
+                                                    {order.status === 'paid' ? 'PAGADO' : 'PENDIENTE'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div style={{ background: 'white', padding: '0.75rem', borderRadius: '8px', border: '1px dashed #cbd5e1', marginBottom: '1rem' }}>
+                                            {order.items.map((item: any, idx: number) => (
+                                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                                                    <span style={{ color: '#455a64' }}>
+                                                        <strong style={{ color: '#1e293b' }}>{item.passengerName}</strong> — {item.name} ({item.variantName})
+                                                    </span>
+                                                    <span style={{ fontWeight: '600' }}>${item.price}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {order.status !== 'paid' && (
+                                            <button
+                                                onClick={() => handleApproveTicketOrder(order.id)}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '0.5rem',
+                                                    background: order.payment_method === 'transfer' ? '#3b82f6' : '#10b981',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.9rem'
+                                                }}
+                                            >
+                                                {order.payment_method === 'transfer'
+                                                    ? 'Aprobar Pago (Transferencia)'
+                                                    : 'Marcar como Pagado'}
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Payments History & Form */}
                     <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)' }}>
