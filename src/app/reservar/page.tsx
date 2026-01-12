@@ -846,16 +846,16 @@ export default function ReservarPage() {
                             {paymentMethod === 'transfer' ? 'Realiza el pago para confirmar.' : 'Completa el proceso.'}
                         </p>
 
-                        <div style={{ background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)', color: 'white', padding: '2rem', borderRadius: '16px', marginBottom: '2rem', boxShadow: '0 10px 20px -5px rgba(44, 62, 80, 0.3)' }}>
-                            <p style={{ opacity: 0.8, marginBottom: '0.5rem', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Tu número de reservación</p>
-                            <div style={{ fontSize: '2.5rem', fontWeight: 'bold', letterSpacing: '2px', fontFamily: 'monospace', textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
+                        <div style={{ background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)', color: 'white', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem', boxShadow: '0 6px 12px -3px rgba(44, 62, 80, 0.25)' }}>
+                            <p style={{ opacity: 0.8, marginBottom: '0.25rem', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tu número de reservación</p>
+                            <div style={{ fontSize: '1rem', fontWeight: 'bold', letterSpacing: '0.5px', fontFamily: 'monospace' }}>
                                 {result.reservation_code}
                             </div>
 
                             {result.boarding_access_code && (
-                                <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                                    <p style={{ opacity: 0.8, marginBottom: '0.25rem', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#ffb74d', fontWeight: 'bold' }}>⭐ Tu código de abordaje ⭐</p>
-                                    <div style={{ fontSize: '2rem', fontWeight: '900', letterSpacing: '1px', color: '#ffcc80' }}>
+                                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+                                    <p style={{ opacity: 0.9, marginBottom: '0.25rem', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#ffb74d', fontWeight: 'bold' }}>⭐ Código de abordaje ⭐</p>
+                                    <div style={{ fontSize: '1.25rem', fontWeight: '900', letterSpacing: '1px', color: '#ffcc80' }}>
                                         {result.boarding_access_code}
                                     </div>
                                 </div>
