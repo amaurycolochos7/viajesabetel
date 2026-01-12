@@ -123,11 +123,11 @@ export default function ExtraActivities() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px dashed #eee', paddingBottom: '0.5rem' }}>
                                 <span style={{ color: '#455a64', fontWeight: '600' }}>Adultos</span>
-                                <span style={{ color: '#0277bd', fontWeight: '700', fontSize: '1.25rem' }}>$200.00</span>
+                                <span style={{ color: '#0277bd', fontWeight: '700', fontSize: '1.25rem' }}>$170.00</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ color: '#455a64', fontWeight: '600' }}>Niños (2+ años)</span>
-                                <span style={{ color: '#0277bd', fontWeight: '700', fontSize: '1.25rem' }}>$130.00</span>
+                                <span style={{ color: '#0277bd', fontWeight: '700', fontSize: '1.25rem' }}>$110.00</span>
                             </div>
                         </div>
 

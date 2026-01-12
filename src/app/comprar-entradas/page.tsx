@@ -19,8 +19,8 @@ const ACTIVITIES = {
         id: 'acuario',
         name: 'Acuario Veracruz',
         variants: [
-            { id: 'acuario_adult', name: 'Adulto', price: 200 },
-            { id: 'acuario_child', name: 'Niño (2+ años)', price: 130 }
+            { id: 'acuario_adult', name: 'Adulto', price: 170 },
+            { id: 'acuario_child', name: 'Niño (2+ años)', price: 110 }
         ]
     },
     blumia: {
