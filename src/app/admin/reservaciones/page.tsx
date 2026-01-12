@@ -94,230 +94,197 @@ export default function ReservacionesPage() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#f5f6fa' }}>
+        <div style={{ minHeight: '100vh', background: '#f8f9fa', paddingBottom: '2rem' }}>
             {/* Header */}
             <header style={{
-                background: 'var(--primary)',
-                color: 'white',
-                padding: '1rem 1.5rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                background: 'white',
+                borderBottom: '1px solid rgba(0,0,0,0.05)',
+                padding: '1rem',
+                position: 'sticky',
+                top: 0,
+                zIndex: 10,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Link href="/admin" style={{ color: 'white', textDecoration: 'none', opacity: 0.9 }}>
-                        ← Dashboard
-                    </Link>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0 }}>Reservaciones</h1>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>{userEmail}</span>
-                    <button
-                        onClick={handleLogout}
-                        style={{
-                            background: 'rgba(255,255,255,0.2)',
-                            border: '1px solid rgba(255,255,255,0.3)',
-                            color: 'white',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.85rem'
-                        }}
-                    >
-                        Cerrar sesión
-                    </button>
+                <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <Link href="/admin" style={{ color: '#64748b', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                        </Link>
+                        <h1 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: '#1e293b' }}>Reservaciones</h1>
+                    </div>
                 </div>
             </header>
 
-            <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem' }}>
-                {/* Search */}
-                <div style={{ marginBottom: '1rem' }}>
-                    <input
-                        type="text"
-                        placeholder="Buscar por código, nombre o teléfono..."
-                        value={searchCode}
-                        onChange={(e) => setSearchCode(e.target.value)}
-                        style={{
-                            width: '100%',
-                            maxWidth: '400px',
-                            padding: '0.75rem 1rem',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px',
-                            fontSize: '0.95rem'
-                        }}
-                    />
-                </div>
-
-                {/* Filter Tabs */}
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                    <button
-                        onClick={() => setFilter('all')}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            background: filter === 'all' ? 'var(--primary)' : '#e0e0e0',
-                            color: filter === 'all' ? 'white' : '#333',
-                            fontWeight: '500'
-                        }}
-                    >
-                        Todas ({stats.total})
-                    </button>
-                    <button
-                        onClick={() => setFilter('pendiente')}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            background: filter === 'pendiente' ? '#f39c12' : '#e0e0e0',
-                            color: filter === 'pendiente' ? 'white' : '#333',
-                            fontWeight: '500'
-                        }}
-                    >
-                        Pendientes ({stats.pendientes})
-                    </button>
-                    <button
-                        onClick={() => setFilter('anticipo_pagado')}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            background: filter === 'anticipo_pagado' ? '#3498db' : '#e0e0e0',
-                            color: filter === 'anticipo_pagado' ? 'white' : '#333',
-                            fontWeight: '500'
-                        }}
-                    >
-                        Con anticipo ({stats.conAnticipo})
-                    </button>
-                    <button
-                        onClick={() => setFilter('pagado_completo')}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            background: filter === 'pagado_completo' ? '#27ae60' : '#e0e0e0',
-                            color: filter === 'pagado_completo' ? 'white' : '#333',
-                            fontWeight: '500'
-                        }}
-                    >
-                        Pagadas ({stats.pagadas})
-                    </button>
-                    <button
-                        onClick={() => setFilter('cancelado')}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            background: filter === 'cancelado' ? '#e74c3c' : '#e0e0e0',
-                            color: filter === 'cancelado' ? 'white' : '#333',
-                            fontWeight: '500'
-                        }}
-                    >
-                        Canceladas ({stats.canceladas})
-                    </button>
-                </div>
-
-                {/* Table */}
-                <div style={{ background: 'white', borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-                    <div style={{ overflowX: 'auto' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <thead>
-                                <tr style={{ background: '#f8f9fa', borderBottom: '2px solid #e0e0e0' }}>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600' }}>Código</th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600' }}>Responsable</th>
-                                    <th style={{ padding: '1rem', textAlign: 'left', fontWeight: '600' }}>Teléfono</th>
-                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: '600' }}>Lugares</th>
-                                    <th style={{ padding: '1rem', textAlign: 'right', fontWeight: '600' }}>Total</th>
-                                    <th style={{ padding: '1rem', textAlign: 'right', fontWeight: '600' }}>Pagado</th>
-                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: '600' }}>Estatus</th>
-                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: '600' }}>Fecha</th>
-                                    <th style={{ padding: '1rem', textAlign: 'center', fontWeight: '600' }}>Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredReservations.map((reservation) => (
-                                    <tr
-                                        key={reservation.id}
-                                        style={{ borderBottom: '1px solid #e0e0e0' }}
-                                    >
-                                        <td style={{ padding: '1rem' }}>
-                                            <Link
-                                                href={`/admin/reservaciones/${reservation.id}`}
-                                                style={{
-                                                    color: 'var(--primary)',
-                                                    textDecoration: 'none',
-                                                    fontWeight: '600'
-                                                }}
-                                            >
-                                                {reservation.reservation_code}
-                                            </Link>
-                                        </td>
-                                        <td style={{ padding: '1rem' }}>{reservation.responsible_name}</td>
-                                        <td style={{ padding: '1rem' }}>{reservation.responsible_phone}</td>
-                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                            {reservation.seats_payable}/{reservation.seats_total}
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'right', fontWeight: '500' }}>
-                                            ${reservation.total_amount.toLocaleString('es-MX')}
-                                        </td>
-                                        <td style={{
-                                            padding: '1rem',
-                                            textAlign: 'right',
-                                            fontWeight: '500',
-                                            color: reservation.amount_paid > 0 ? '#27ae60' : '#999'
-                                        }}>
-                                            ${reservation.amount_paid.toLocaleString('es-MX')}
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                            <span style={{
-                                                display: 'inline-block',
-                                                padding: '0.25rem 0.75rem',
-                                                borderRadius: '20px',
-                                                fontSize: '0.8rem',
-                                                fontWeight: '600',
-                                                background: getStatusColor(reservation.status) + '20',
-                                                color: getStatusColor(reservation.status)
-                                            }}>
-                                                {getStatusLabel(reservation.status)}
-                                            </span>
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'center', fontSize: '0.85rem', color: '#666' }}>
-                                            {new Date(reservation.created_at).toLocaleDateString('es-MX', {
-                                                day: 'numeric',
-                                                month: 'short'
-                                            })}
-                                        </td>
-                                        <td style={{ padding: '1rem', textAlign: 'center' }}>
-                                            <Link
-                                                href={`/admin/reservaciones/${reservation.id}`}
-                                                style={{
-                                                    display: 'inline-block',
-                                                    padding: '0.4rem 0.75rem',
-                                                    background: 'var(--primary)',
-                                                    color: 'white',
-                                                    borderRadius: '4px',
-                                                    textDecoration: 'none',
-                                                    fontSize: '0.8rem'
-                                                }}
-                                            >
-                                                Ver
-                                            </Link>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+            <main style={{ maxWidth: '800px', margin: '0 auto', padding: '1rem' }}>
+                {/* Search & Stats */}
+                <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ position: 'relative' }}>
+                        <input
+                            type="text"
+                            placeholder="Buscar reservación..."
+                            value={searchCode}
+                            onChange={(e) => setSearchCode(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '1rem 1rem 1rem 3rem',
+                                border: 'none',
+                                borderRadius: '12px',
+                                fontSize: '1rem',
+                                background: 'white',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                                outline: 'none'
+                            }}
+                        />
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#94a3b8"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }}
+                        >
+                            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+                        </svg>
                     </div>
 
-                    {filteredReservations.length === 0 && (
-                        <div style={{ padding: '3rem', textAlign: 'center', color: '#666' }}>
-                            No hay reservaciones que coincidan
+                    {/* Filter Tabs (Scrollable) */}
+                    <div style={{
+                        display: 'flex',
+                        gap: '0.5rem',
+                        overflowX: 'auto',
+                        paddingBottom: '4px',
+                        scrollbarWidth: 'none',
+                        msOverflowStyle: 'none'
+                    }}>
+                        {[
+                            { id: 'all', label: 'Todas', count: stats.total, color: '#334155' },
+                            { id: 'pendiente', label: 'Pendientes', count: stats.pendientes, color: '#f59e0b' },
+                            { id: 'anticipo_pagado', label: 'Anticipo', count: stats.conAnticipo, color: '#3b82f6' },
+                            { id: 'pagado_completo', label: 'Pagadas', count: stats.pagadas, color: '#22c55e' },
+                            { id: 'cancelado', label: 'Canceladas', count: stats.canceladas, color: '#ef4444' }
+                        ].map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setFilter(tab.id as FilterStatus)}
+                                style={{
+                                    padding: '0.5rem 1rem',
+                                    border: 'none',
+                                    borderRadius: '20px',
+                                    whiteSpace: 'nowrap',
+                                    cursor: 'pointer',
+                                    background: filter === tab.id ? tab.color : 'white',
+                                    color: filter === tab.id ? 'white' : '#64748b',
+                                    fontWeight: '600',
+                                    fontSize: '0.9rem',
+                                    boxShadow: filter === tab.id ? '0 4px 6px -1px rgba(0,0,0,0.1)' : '0 1px 2px rgba(0,0,0,0.05)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                {tab.label} <span style={{ opacity: 0.8, marginLeft: '4px', fontSize: '0.8em' }}>{tab.count}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Card List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {filteredReservations.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                            No se encontraron reservaciones
                         </div>
+                    ) : (
+                        filteredReservations.map((r) => (
+                            <Link
+                                href={`/admin/reservaciones/${r.id}`}
+                                key={r.id}
+                                style={{ textDecoration: 'none' }}
+                            >
+                                <div style={{
+                                    background: 'white',
+                                    borderRadius: '16px',
+                                    padding: '1.25rem',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                                    border: '1px solid rgba(0,0,0,0.02)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '1rem'
+                                }}>
+                                    {/* Top Row: Info & Status Badge */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                        <div>
+                                            <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1e293b' }}>
+                                                {r.responsible_name}
+                                            </div>
+                                            <div style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '2px' }}>
+                                                {r.reservation_code}
+                                            </div>
+                                        </div>
+                                        <span style={{
+                                            fontSize: '0.75rem',
+                                            padding: '4px 10px',
+                                            borderRadius: '12px',
+                                            fontWeight: '700',
+                                            textTransform: 'uppercase',
+                                            background: getStatusColor(r.status) + '15',
+                                            color: getStatusColor(r.status)
+                                        }}>
+                                            {getStatusLabel(r.status)}
+                                        </span>
+                                    </div>
+
+                                    {/* Middle Row: Stats */}
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(3, 1fr)',
+                                        gap: '0.5rem',
+                                        padding: '0.75rem 0',
+                                        borderTop: '1px solid #f1f5f9',
+                                        borderBottom: '1px solid #f1f5f9'
+                                    }}>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase' }}>Lugares</div>
+                                            <div style={{ fontSize: '0.95rem', color: '#334155', fontWeight: '600' }}>
+                                                {r.seats_payable} <span style={{ color: '#cbd5e1', fontSize: '0.8em' }}>/ {r.seats_total}</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase' }}>Pagado</div>
+                                            <div style={{ fontSize: '0.95rem', color: r.amount_paid > 0 ? '#10b981' : '#94a3b8', fontWeight: '700' }}>
+                                                ${r.amount_paid > 0 ? (r.amount_paid / 1000).toFixed(1) + 'k' : '0'}
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase' }}>Total</div>
+                                            <div style={{ fontSize: '0.95rem', color: '#1e293b', fontWeight: '800' }}>
+                                                ${(r.total_amount / 1000).toFixed(1)}k
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom Row: Date & Action */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                                            {new Date(r.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                        </div>
+                                        <span style={{
+                                            color: '#3b82f6',
+                                            fontSize: '0.9rem',
+                                            fontWeight: '600',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                        }}>
+                                            Ver detalle
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                                        </span>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))
                     )}
                 </div>
             </main>

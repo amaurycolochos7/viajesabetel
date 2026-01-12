@@ -170,6 +170,12 @@ export default function TourGroupsPage() {
         setSelectedGroup(group)
         setSelectedPassengers([])
         await loadGroupMembers(group.id)
+        // Auto-scroll to details on mobile/tablet
+        if (window.innerWidth < 1024) {
+            setTimeout(() => {
+                document.getElementById('group-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            }, 100)
+        }
     }
 
     const handleTogglePassenger = (passengerId: string) => {
@@ -298,100 +304,110 @@ export default function TourGroupsPage() {
 
     if (isLoading) {
         return (
-            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f6fa' }}>
-                <p>Cargando...</p>
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+                <p style={{ color: '#64748b' }}>Cargando...</p>
             </div>
         )
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: '#f5f6fa' }}>
+        <div style={{ minHeight: '100vh', background: '#f8f9fa', paddingBottom: '2rem' }}>
             {/* Header */}
             <header style={{
-                background: 'var(--primary)',
-                color: 'white',
-                padding: '1rem 1.5rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                background: 'white',
+                borderBottom: '1px solid rgba(0,0,0,0.05)',
+                padding: '1rem',
+                position: 'sticky',
+                top: 0,
+                zIndex: 10,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Link href="/admin" style={{ color: 'white', textDecoration: 'none', opacity: 0.9 }}>
-                        ← Dashboard
+                <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <Link href="/admin" style={{ color: '#64748b', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
                     </Link>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0 }}>Grupos de Tour</h1>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>{userEmail}</span>
-                    <button
-                        onClick={handleLogout}
-                        style={{
-                            background: 'rgba(255,255,255,0.2)',
-                            border: '1px solid rgba(255,255,255,0.3)',
-                            color: 'white',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.85rem'
-                        }}
-                    >
-                        Cerrar sesión
-                    </button>
+                    <h1 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: '#1e293b' }}>Grupos de Tour</h1>
                 </div>
             </header>
 
-            <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem' }}>
+            <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '1.5rem 1rem' }}>
                 {/* Link público */}
                 <div style={{
-                    background: '#e3f2fd',
-                    padding: '1rem',
-                    borderRadius: '8px',
-                    marginBottom: '1.5rem',
+                    background: 'white',
+                    padding: '1.5rem',
+                    borderRadius: '16px',
+                    marginBottom: '2rem',
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '1rem'
+                    flexDirection: 'column',
+                    gap: '1rem',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)'
                 }}>
-                    <div>
-                        <strong>Link público para consultar grupo:</strong>
-                        <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-                            {getPublicLink()}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#3b82f6' }}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                                <strong style={{ color: '#334155', fontSize: '1rem' }}>Link público para pasajeros</strong>
+                            </div>
+                            <div style={{ fontFamily: 'monospace', fontSize: '0.9rem', color: '#64748b', wordBreak: 'break-all', background: '#f1f5f9', padding: '0.5rem 0.75rem', borderRadius: '6px' }}>
+                                {getPublicLink()}
+                            </div>
                         </div>
+                        <button
+                            onClick={() => {
+                                navigator.clipboard.writeText(getPublicLink())
+                                alert('Link copiado al portapapeles')
+                            }}
+                            style={{
+                                padding: '0.75rem 1.25rem',
+                                background: '#3b82f6',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                fontWeight: '700',
+                                fontSize: '0.9rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                            Copiar Link
+                        </button>
                     </div>
-                    <button
-                        onClick={() => navigator.clipboard.writeText(getPublicLink())}
-                        style={{
-                            padding: '0.5rem 1rem',
-                            background: 'var(--primary)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Copiar link
-                    </button>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '1.5rem' }}>
+                <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '2rem',
+                    alignItems: 'flex-start'
+                }}>
                     {/* Left: Groups list */}
-                    <div>
-                        <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                            <h2 style={{ fontWeight: '600', marginBottom: '1rem' }}>Crear nuevo grupo</h2>
-                            <div style={{ marginBottom: '0.75rem' }}>
+                    <div style={{
+                        flex: '1 1 300px',
+                        minWidth: '280px',
+                        width: '100%'
+                    }}>
+                        {/* New Group Card */}
+                        <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)' }}>
+                            <h2 style={{ fontWeight: '700', marginBottom: '1.25rem', color: '#1e293b', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#10b981' }}><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                                Crear Nuevo Grupo
+                            </h2>
+                            <div style={{ marginBottom: '1rem' }}>
                                 <input
                                     type="text"
-                                    className="form-input"
+                                    style={{ width: '100%', padding: '0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', boxSizing: 'border-box' }}
                                     placeholder="Nombre del grupo (ej: Grupo 1)"
                                     value={newGroupName}
                                     onChange={(e) => setNewGroupName(e.target.value)}
                                 />
                             </div>
-                            <div style={{ marginBottom: '0.75rem' }}>
+                            <div style={{ marginBottom: '1.25rem' }}>
                                 <input
                                     type="datetime-local"
-                                    className="form-input"
+                                    style={{ width: '100%', padding: '0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', color: '#334155', boxSizing: 'border-box' }}
                                     value={newGroupDatetime}
                                     onChange={(e) => setNewGroupDatetime(e.target.value)}
                                 />
@@ -399,46 +415,63 @@ export default function TourGroupsPage() {
                             <button
                                 onClick={handleCreateGroup}
                                 disabled={isCreating || !newGroupName.trim()}
-                                className="nav-button"
-                                style={{ width: '100%' }}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.85rem',
+                                    borderRadius: '8px',
+                                    border: 'none',
+                                    background: '#10b981',
+                                    color: 'white',
+                                    fontWeight: '700',
+                                    cursor: isCreating ? 'not-allowed' : 'pointer',
+                                    opacity: isCreating ? 0.7 : 1,
+                                    boxShadow: '0 2px 4px rgba(16, 185, 129, 0.2)'
+                                }}
                             >
-                                {isCreating ? 'Creando...' : 'Crear grupo'}
+                                {isCreating ? 'Creando...' : 'Crear Grupo'}
                             </button>
                         </div>
 
-                        <div style={{ background: 'white', padding: '1rem', borderRadius: '8px' }}>
-                            <h3 style={{ fontWeight: '600', marginBottom: '0.75rem' }}>Grupos ({groups.length})</h3>
+                        {/* List Groups */}
+                        <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)' }}>
+                            <h3 style={{ fontWeight: '700', marginBottom: '1.25rem', color: '#334155', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                Grupos Disponibles ({groups.length})
+                            </h3>
                             {groups.length === 0 ? (
-                                <p style={{ color: '#666', textAlign: 'center', padding: '1rem' }}>
+                                <p style={{ color: '#94a3b8', textAlign: 'center', padding: '2rem 1rem', border: '1px dashed #e2e8f0', borderRadius: '8px' }}>
                                     No hay grupos creados
                                 </p>
                             ) : (
-                                <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                <div style={{ display: 'grid', gap: '0.75rem' }}>
                                     {groups.map(group => (
                                         <button
                                             key={group.id}
                                             onClick={() => handleSelectGroup(group)}
                                             style={{
-                                                padding: '0.75rem',
-                                                border: selectedGroup?.id === group.id ? '2px solid var(--primary)' : '1px solid #ddd',
-                                                borderRadius: '4px',
-                                                background: selectedGroup?.id === group.id ? '#e3f2fd' : 'white',
+                                                padding: '1rem',
+                                                border: selectedGroup?.id === group.id ? '2px solid #3b82f6' : '1px solid #f1f5f9',
+                                                borderRadius: '10px',
+                                                background: selectedGroup?.id === group.id ? '#eff6ff' : '#f8fafc',
                                                 cursor: 'pointer',
-                                                textAlign: 'left'
+                                                textAlign: 'left',
+                                                transition: 'all 0.2s',
+                                                width: '100%',
+                                                position: 'relative'
                                             }}
                                         >
-                                            <div style={{ fontWeight: '600' }}>{group.group_name}</div>
-                                            {group.tour_datetime && (
-                                                <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                                            <div style={{ fontWeight: '700', color: selectedGroup?.id === group.id ? '#1d4ed8' : '#334155', fontSize: '1.05rem', marginBottom: '4px' }}>
+                                                {group.group_name}
+                                            </div>
+                                            {group.tour_datetime ? (
+                                                <div style={{ fontSize: '0.85rem', color: selectedGroup?.id === group.id ? '#60a5fa' : '#64748b', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                                                     {new Date(group.tour_datetime).toLocaleString('es-MX', {
-                                                        weekday: 'short',
-                                                        day: 'numeric',
-                                                        month: 'short',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                        timeZone: 'UTC'
+                                                        weekday: 'short', day: 'numeric', month: 'short',
+                                                        hour: '2-digit', minute: '2-digit', timeZone: 'UTC'
                                                     })}
                                                 </div>
+                                            ) : (
+                                                <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>Sin horario asignado</div>
                                             )}
                                         </button>
                                     ))}
@@ -448,39 +481,45 @@ export default function TourGroupsPage() {
                     </div>
 
                     {/* Right: Group details */}
-                    <div>
+                    <div id="group-details" style={{ flex: '999 1 300px', minWidth: '300px', width: '100%' }}>
                         {selectedGroup ? (
                             <>
-
-                                <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                        <div style={{ flex: 1, marginRight: '1rem' }}>
+                                {/* Group Info Card */}
+                                <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                                        <div style={{ flex: 1, minWidth: '200px' }}>
+                                            <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', marginBottom: '6px', display: 'block' }}>Nombre del Grupo</label>
                                             <input
                                                 type="text"
-                                                className="form-input"
-                                                style={{ fontSize: '1.5rem', fontWeight: '600', padding: '0.25rem 0.5rem' }}
+                                                style={{ fontSize: '1.5rem', fontWeight: '800', padding: '0.5rem', border: '1px solid transparent', borderRadius: '6px', width: '100%', color: '#1e293b', background: 'transparent', transition: 'border 0.2s', marginLeft: '-0.5rem' }}
                                                 defaultValue={selectedGroup.group_name}
                                                 key={selectedGroup.id}
                                                 onBlur={(e) => handleUpdateGroupName(e.target.value)}
+                                                className="editable-input" // Add global css for focus state if needed
                                             />
                                         </div>
-                                        <span style={{
-                                            padding: '0.25rem 0.75rem',
-                                            borderRadius: '20px',
-                                            background: groupMembers.length >= selectedGroup.max_members ? '#27ae60' : '#f39c12',
-                                            color: 'white',
-                                            fontSize: '0.85rem',
-                                            fontWeight: '600'
+                                        <div style={{
+                                            padding: '0.75rem 1.25rem',
+                                            borderRadius: '50px',
+                                            background: groupMembers.length >= selectedGroup.max_members ? '#ecfdf5' : '#fffbeb',
+                                            color: groupMembers.length >= selectedGroup.max_members ? '#059669' : '#d97706',
+                                            fontSize: '1rem',
+                                            fontWeight: '700',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            border: `1px solid ${groupMembers.length >= selectedGroup.max_members ? '#a7f3d0' : '#fcd34d'}`
                                         }}>
-                                            {groupMembers.length}/{selectedGroup.max_members}
-                                        </span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                                            {groupMembers.length} / {selectedGroup.max_members}
+                                        </div>
                                     </div>
 
-                                    <div style={{ marginBottom: '1rem' }}>
-                                        <label className="form-label">Horario del tour</label>
+                                    <div style={{ marginBottom: '2rem' }}>
+                                        <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Horario del tour</label>
                                         <input
                                             type="datetime-local"
-                                            className="form-input"
+                                            style={{ width: '100%', padding: '0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '1rem', color: '#334155' }}
                                             value={selectedGroup.tour_datetime?.slice(0, 16) || ''}
                                             onChange={(e) => handleUpdateDatetime(e.target.value)}
                                         />
@@ -489,26 +528,39 @@ export default function TourGroupsPage() {
                                     <button
                                         onClick={() => handleDeleteGroup(selectedGroup.id)}
                                         style={{
-                                            padding: '0.5rem 1rem',
-                                            background: '#e74c3c',
-                                            color: 'white',
+                                            padding: '0.75rem',
+                                            background: '#fef2f2',
+                                            color: '#dc2626',
                                             border: 'none',
-                                            borderRadius: '4px',
+                                            borderRadius: '8px',
                                             cursor: 'pointer',
-                                            fontSize: '0.85rem'
+                                            fontSize: '0.9rem',
+                                            fontWeight: '700',
+                                            width: '100%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            gap: '0.5rem',
+                                            transition: 'background 0.2s'
                                         }}
                                     >
-                                        Eliminar grupo
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></svg>
+                                        Eliminar Grupo
                                     </button>
                                 </div>
 
-                                {/* Members */}
-                                <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                                    <h3 style={{ fontWeight: '600', marginBottom: '1rem' }}>Miembros asignados</h3>
+                                {/* Members List */}
+                                <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', marginBottom: '1.5rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)' }}>
+                                    <h3 style={{ fontWeight: '700', marginBottom: '1.25rem', color: '#1e293b', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><polyline points="16 11 18 13 22 9" /></svg>
+                                        Miembros Asignados
+                                    </h3>
                                     {groupMembers.length === 0 ? (
-                                        <p style={{ color: '#666', textAlign: 'center' }}>Sin miembros asignados</p>
+                                        <div style={{ padding: '3rem', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', color: '#94a3b8', border: '1px dashed #e2e8f0' }}>
+                                            Este grupo está vacío
+                                        </div>
                                     ) : (
-                                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                        <div style={{ display: 'grid', gap: '0.75rem' }}>
                                             {groupMembers.map((member, idx) => (
                                                 <div
                                                     key={member.id}
@@ -516,25 +568,35 @@ export default function TourGroupsPage() {
                                                         display: 'flex',
                                                         justifyContent: 'space-between',
                                                         alignItems: 'center',
-                                                        padding: '0.5rem 0.75rem',
-                                                        background: '#f8f9fa',
-                                                        borderRadius: '4px'
+                                                        padding: '1rem',
+                                                        background: 'white',
+                                                        border: '1px solid #f1f5f9',
+                                                        borderRadius: '12px',
+                                                        boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
+                                                        transition: 'transform 0.1s'
                                                     }}
                                                 >
-                                                    <div>
-                                                        <strong>{idx + 1}.</strong> {member.passenger_first_name} {member.passenger_last_name}
-                                                        <span style={{ color: '#666', marginLeft: '0.5rem', fontSize: '0.85rem' }}>
-                                                            ({member.reservation_code})
-                                                        </span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                        <span style={{ color: '#cbd5e1', fontWeight: '700', fontSize: '1.2rem', minWidth: '24px' }}>{idx + 1}</span>
+                                                        <div>
+                                                            <strong style={{ color: '#334155', display: 'block', fontSize: '1rem' }}>{member.passenger_first_name} {member.passenger_last_name}</strong>
+                                                            <span style={{ color: '#64748b', fontSize: '0.8rem', fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>
+                                                                {member.reservation_code}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                     <button
                                                         onClick={() => handleRemoveMember(member.id)}
                                                         style={{
-                                                            background: 'none',
+                                                            background: '#fee2e2',
                                                             border: 'none',
-                                                            color: '#e74c3c',
+                                                            color: '#dc2626',
                                                             cursor: 'pointer',
-                                                            fontSize: '0.9rem'
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '700',
+                                                            padding: '0.5rem 0.75rem',
+                                                            borderRadius: '6px',
+                                                            transition: 'background 0.2s'
                                                         }}
                                                     >
                                                         Quitar
@@ -545,16 +607,17 @@ export default function TourGroupsPage() {
                                     )}
                                 </div>
 
-                                {/* Add passengers grouped by reservation */}
+                                {/* Add passengers */}
                                 {groupMembers.length < selectedGroup.max_members && eligiblePassengers.length > 0 && (
-                                    <div style={{ background: 'white', padding: '1.5rem', borderRadius: '8px' }}>
-                                        <h3 style={{ fontWeight: '600', marginBottom: '1rem' }}>
-                                            Pasajeros disponibles ({eligiblePassengers.length})
+                                    <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)' }}>
+                                        <h3 style={{ fontWeight: '700', marginBottom: '0.25rem', color: '#1e293b', fontSize: '1.1rem' }}>
+                                            Agregar Pasajeros
                                         </h3>
-                                        <p style={{ color: '#666', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                                            Agrupados por reservación. Selecciona para asignar.
+                                        <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+                                            Selecciona pasajeros para agregarlos a este grupo.
                                         </p>
-                                        <div style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '1rem' }}>
+
+                                        <div style={{ maxHeight: '400px', overflowY: 'auto', marginBottom: '1.5rem', border: '1px solid #e2e8f0', borderRadius: '12px', background: '#f8fafc' }}>
                                             {Object.entries(
                                                 eligiblePassengers.reduce((acc, p) => {
                                                     const code = p.reservation_code
@@ -563,16 +626,17 @@ export default function TourGroupsPage() {
                                                     return acc
                                                 }, {} as Record<string, EligiblePassenger[]>)
                                             ).map(([code, passengers]) => (
-                                                <div key={code} style={{ marginBottom: '1rem', border: '1px solid #eee', borderRadius: '4px', overflow: 'hidden' }}>
+                                                <div key={code} style={{ borderBottom: '1px solid #e2e8f0' }}>
                                                     <div style={{
-                                                        background: '#f8f9fa',
-                                                        padding: '0.5rem 0.75rem',
-                                                        fontSize: '0.85rem',
-                                                        fontWeight: '600',
-                                                        color: '#555',
-                                                        borderBottom: '1px solid #eee'
+                                                        background: '#f1f5f9',
+                                                        padding: '0.75rem 1rem',
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: '800',
+                                                        color: '#475569',
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: '0.5px'
                                                     }}>
-                                                        Reserva: {code} ({passengers.length})
+                                                        {code} <span style={{ fontWeight: '600', color: '#94a3b8' }}>({passengers.length})</span>
                                                     </div>
                                                     {passengers.map(passenger => (
                                                         <label
@@ -580,22 +644,39 @@ export default function TourGroupsPage() {
                                                             style={{
                                                                 display: 'flex',
                                                                 alignItems: 'center',
-                                                                gap: '0.5rem',
-                                                                padding: '0.5rem 0.75rem',
+                                                                gap: '1rem',
+                                                                padding: '1rem',
                                                                 cursor: 'pointer',
-                                                                borderBottom: '1px solid #eee',
-                                                                background: selectedPassengers.includes(passenger.id) ? '#e3f2fd' : 'white'
+                                                                borderBottom: '1px solid #f1f5f9',
+                                                                background: selectedPassengers.includes(passenger.id) ? '#eff6ff' : 'white',
+                                                                transition: 'background 0.2s'
                                                             }}
                                                         >
+                                                            <div style={{
+                                                                width: '24px',
+                                                                height: '24px',
+                                                                borderRadius: '6px',
+                                                                border: selectedPassengers.includes(passenger.id) ? '2px solid #3b82f6' : '2px solid #cbd5e1',
+                                                                background: selectedPassengers.includes(passenger.id) ? '#3b82f6' : 'white',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                transition: 'all 0.2s'
+                                                            }}>
+                                                                {selectedPassengers.includes(passenger.id) && (
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                                                )}
+                                                            </div>
                                                             <input
                                                                 type="checkbox"
                                                                 checked={selectedPassengers.includes(passenger.id)}
                                                                 onChange={() => handleTogglePassenger(passenger.id)}
+                                                                style={{ display: 'none' }} // Custom checkbox above
                                                             />
-                                                            <div>
-                                                                <div>{passenger.first_name} {passenger.last_name}</div>
+                                                            <div style={{ flex: 1 }}>
+                                                                <div style={{ color: '#334155', fontWeight: '600', fontSize: '0.95rem' }}>{passenger.first_name} {passenger.last_name}</div>
                                                                 {passenger.congregation && (
-                                                                    <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                                                                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
                                                                         {passenger.congregation}
                                                                     </div>
                                                                 )}
@@ -608,7 +689,20 @@ export default function TourGroupsPage() {
                                         <button
                                             onClick={handleAssignPassengers}
                                             disabled={selectedPassengers.length === 0}
-                                            className="nav-button"
+                                            style={{
+                                                width: '100%',
+                                                padding: '1rem',
+                                                background: selectedPassengers.length > 0 ? '#3b82f6' : '#cbd5e1',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '12px',
+                                                fontWeight: '800',
+                                                fontSize: '1rem',
+                                                cursor: selectedPassengers.length === 0 ? 'not-allowed' : 'pointer',
+                                                boxShadow: selectedPassengers.length > 0 ? '0 4px 6px -1px rgba(59, 130, 246, 0.5)' : 'none',
+                                                transition: 'all 0.2s',
+                                                transform: selectedPassengers.length > 0 ? 'translateY(0)' : 'translateY(1px)'
+                                            }}
                                         >
                                             Asignar {selectedPassengers.length} seleccionados
                                         </button>
@@ -618,12 +712,23 @@ export default function TourGroupsPage() {
                         ) : (
                             <div style={{
                                 background: 'white',
-                                padding: '3rem',
-                                borderRadius: '8px',
+                                padding: '4rem 2rem',
+                                borderRadius: '16px',
                                 textAlign: 'center',
-                                color: '#666'
+                                color: '#94a3b8',
+                                border: '2px dashed #e2e8f0',
+                                height: '100%',
+                                minHeight: '300px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center'
                             }}>
-                                <p>Selecciona un grupo para ver detalles y asignar miembros</p>
+                                <div style={{ background: '#f1f5f9', padding: '1.5rem', borderRadius: '50%', marginBottom: '1.5rem' }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#cbd5e1' }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                                </div>
+                                <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#64748b', marginBottom: '0.5rem' }}>Ningún grupo seleccionado</h3>
+                                <p style={{ fontSize: '0.9rem', maxWidth: '250px', lineHeight: '1.5' }}>Selecciona un grupo de la lista de la izquierda para ver sus detalles y administrar pasajeros.</p>
                             </div>
                         )}
                     </div>

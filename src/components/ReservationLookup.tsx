@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import html2canvas from 'html2canvas'
 
 interface ReservationInfo {
     reservation_code: string
@@ -43,6 +44,23 @@ export default function ReservationLookup() {
     const [isSearching, setIsSearching] = useState(false)
     const [reservation, setReservation] = useState<ReservationInfo | null>(null)
     const [error, setError] = useState('')
+
+    const generateTicketImage = async (res: ReservationInfo) => {
+        const ticketElement = document.getElementById('reservation-ticket-lookup')
+        if (!ticketElement) return
+
+        try {
+            const canvas = await html2canvas(ticketElement, { scale: 2, useCORS: true })
+            const image = canvas.toDataURL('image/png')
+            const link = document.createElement('a')
+            link.href = image
+            link.download = `Ticket-Betel-${res.reservation_code}.png`
+            link.click()
+        } catch (err) {
+            console.error('Error generating ticket:', err)
+            alert('Error al generar el ticket. Intenta de nuevo.')
+        }
+    }
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -457,8 +475,141 @@ export default function ReservationLookup() {
                     >
                         Hacer otra consulta
                     </button>
+
+                    <button
+                        onClick={() => generateTicketImage(reservation)}
+                        style={{
+                            width: '100%',
+                            marginTop: '1rem',
+                            padding: '1rem',
+                            background: '#2c3e50',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '0.95rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem'
+                        }}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                        Descargar Ticket Oficial
+                    </button>
+                </div>
+            )}
+
+            {reservation && (
+                <div style={{ position: 'absolute', top: -9999, left: -9999, width: '800px' }}>
+                    <TicketTemplate reservation={reservation} />
                 </div>
             )}
         </section>
+    )
+}
+
+function TicketTemplate({ reservation }: { reservation: ReservationInfo }) {
+    return (
+        <div id="reservation-ticket-lookup" style={{
+            background: 'white',
+            padding: '2.5rem',
+            fontFamily: 'sans-serif',
+            color: '#333',
+            position: 'relative',
+            overflow: 'hidden'
+        }}>
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '2rem', borderBottom: '3px solid #1565c0', paddingBottom: '1.5rem' }}>
+                <h1 style={{ color: '#1565c0', margin: '0 0 0.5rem 0', fontSize: '2.5rem', fontWeight: '800', letterSpacing: '-1px' }}>Vamos a Betel</h1>
+                <p style={{ fontSize: '1.1rem', color: '#546e7a', margin: 0, fontWeight: '500', textTransform: 'uppercase', letterSpacing: '1px' }}>7 al 10 de Abril, 2026</p>
+            </div>
+
+            {/* Main Info Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '2rem', marginBottom: '2rem' }}>
+                <div>
+                    <p style={{ fontSize: '0.85rem', color: '#78909c', margin: '0 0 0.25rem 0', textTransform: 'uppercase', fontWeight: '600' }}>Responsable</p>
+                    <h2 style={{ fontSize: '1.5rem', margin: '0 0 0.5rem 0', color: '#263238' }}>{reservation.responsible_name}</h2>
+                    <p style={{ fontSize: '1rem', color: '#455a64', margin: 0 }}>Tel: {reservation.responsible_phone}</p>
+                    <p style={{ fontSize: '1rem', color: '#455a64', margin: '0.25rem 0 0 0' }}>{reservation.responsible_congregation}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                    <p style={{ fontSize: '0.85rem', color: '#78909c', margin: '0 0 0.25rem 0', textTransform: 'uppercase', fontWeight: '600' }}>Código Reservación</p>
+                    <h2 style={{ fontSize: '2rem', margin: '0', color: '#1565c0', fontFamily: 'monospace', letterSpacing: '2px' }}>{reservation.reservation_code}</h2>
+                    {reservation.boarding_access_code && (
+                        <div style={{ marginTop: '1rem' }}>
+                            <p style={{ fontSize: '0.85rem', color: '#ef6c00', margin: '0 0 0.25rem 0', textTransform: 'uppercase', fontWeight: 'bold' }}>Acceso de Abordaje</p>
+                            <h2 style={{ fontSize: '1.75rem', margin: '0', color: '#e65100', fontFamily: 'monospace', letterSpacing: '2px' }}>{reservation.boarding_access_code}</h2>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Passengers Table */}
+            <div style={{ marginBottom: '2rem' }}>
+                <a style={{ display: 'block', background: '#f5f5f5', padding: '0.75rem', borderRadius: '8px 8px 0 0', fontWeight: '700', color: '#37474f', borderBottom: '2px solid #cfd8dc' }}>
+                    Lista de Pasajeros ({reservation.passengers.length})
+                </a>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                        <tr style={{ background: '#f8f9fa', fontSize: '0.85rem', color: '#546e7a', textAlign: 'left' }}>
+                            <th style={{ padding: '0.75rem', borderBottom: '1px solid #eee' }}>#</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '1px solid #eee' }}>Nombre Completo</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '1px solid #eee', textAlign: 'center' }}>Edad</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '1px solid #eee', textAlign: 'right' }}>Asiento Asignado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {reservation.passengers.map((p, i) => (
+                            <tr key={i} style={{ borderBottom: '1px solid #eceff1' }}>
+                                <td style={{ padding: '0.75rem', color: '#90a4ae', width: '40px' }}>{i + 1}</td>
+                                <td style={{ padding: '0.75rem', fontWeight: '600', color: '#263238' }}>{p.first_name} {p.last_name}</td>
+                                <td style={{ padding: '0.75rem', color: '#546e7a', textAlign: 'center' }}>
+                                    {p.is_free_under6 ? 'Menor' : p.age ? `${p.age} años` : 'Adulto'}
+                                </td>
+                                <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                                    {p.seat_number ? (
+                                        <span style={{
+                                            background: '#ffe0b2',
+                                            color: '#e65100',
+                                            padding: '4px 12px',
+                                            borderRadius: '4px',
+                                            fontWeight: '800',
+                                            fontSize: '1.25rem',
+                                            display: 'inline-block'
+                                        }}>
+                                            {p.seat_number}
+                                        </span>
+                                    ) : (
+                                        <span style={{ color: '#bdbdbd', fontStyle: 'italic', fontSize: '0.9rem' }}>Pendiente</span>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Footer Status */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#eceff1', padding: '1.5rem', borderRadius: '8px', borderLeft: '6px solid #1565c0' }}>
+                <div>
+                    <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.9rem', color: '#546e7a' }}>Estado del Pago</p>
+                    <p style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: '#263238' }}>
+                        {reservation.status === 'pagado_completo' ? 'PAGADO (100%)' : reservation.status === 'anticipo_pagado' ? 'ANTICIPO (50%)' : 'PENDIENTE'}
+                    </p>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#78909c' }}>Soporte (Dudas y Pagos)</p>
+                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '1.1rem', fontWeight: 'bold', color: '#1565c0' }}>
+                        961 872 0544
+                    </p>
+                </div>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+                <p style={{ fontSize: '0.8rem', color: '#b0bec5', margin: 0 }}>Este documento sirve como comprobante de tu reservación para el viaje.</p>
+            </div>
+        </div>
     )
 }

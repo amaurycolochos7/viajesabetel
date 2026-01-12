@@ -101,163 +101,180 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-page)' }}>
+        <div style={{ minHeight: '100vh', background: '#f8f9fa', paddingBottom: '2rem' }}>
             {/* Header */}
             <header style={{
-                background: 'var(--primary)',
-                color: 'white',
-                padding: '1rem 1.5rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                background: 'white',
+                borderBottom: '1px solid rgba(0,0,0,0.05)',
+                padding: '1rem',
+                position: 'sticky',
+                top: 0,
+                zIndex: 10,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
             }}>
-                <div>
-                    <h1 style={{ fontSize: '1.25rem', fontWeight: '600', margin: 0 }}>
-                        Panel de Administración
-                    </h1>
-                    <p style={{ fontSize: '0.85rem', opacity: 0.9, margin: '0.25rem 0 0 0' }}>
-                        Viaje a Betel 2026
-                    </p>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>{userEmail}</span>
-                    <button
-                        onClick={handleLogout}
-                        style={{
-                            background: 'rgba(255,255,255,0.2)',
-                            border: '1px solid rgba(255,255,255,0.3)',
-                            color: 'white',
-                            padding: '0.5rem 1rem',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.85rem'
-                        }}
-                    >
-                        Cerrar sesión
-                    </button>
+                <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                            <h1 style={{
+                                fontSize: '1.5rem',
+                                fontWeight: '800',
+                                color: '#1a1a1a',
+                                margin: 0,
+                                letterSpacing: '-0.5px'
+                            }}>
+                                Dashboard
+                            </h1>
+                            <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>Viaje a Betel 2026</p>
+                        </div>
+                        <button
+                            onClick={handleLogout}
+                            style={{
+                                background: '#f5f5f5',
+                                border: 'none',
+                                color: '#666',
+                                width: '36px',
+                                height: '36px',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
+                        </button>
+                    </div>
                 </div>
             </header>
 
-            <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '1.5rem' }}>
+            <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '1rem' }}>
                 {/* Stats Grid */}
                 {stats && (
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                        gap: '1rem',
-                        marginBottom: '2rem'
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                        gap: '0.75rem',
+                        marginBottom: '1.5rem'
                     }}>
-                        <div className="stat-card">
-                            <div className="stat-value">{stats.totalReservations}</div>
-                            <div className="stat-label">Reservaciones</div>
+                        <div style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                            <div style={{ fontSize: '2rem', fontWeight: '800', color: '#2c3e50', lineHeight: 1 }}>{stats.totalReservations}</div>
+                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600', marginTop: '0.25rem' }}>RESERVACIONES</div>
                         </div>
-                        <div className="stat-card">
-                            <div className="stat-value">{stats.totalSeats}</div>
-                            <div className="stat-label">Lugares totales</div>
+                        <div style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                            <div style={{ fontSize: '2rem', fontWeight: '800', color: '#2c3e50', lineHeight: 1 }}>{stats.totalSeats}</div>
+                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600', marginTop: '0.25rem' }}>LUGARES TOTALES</div>
                         </div>
-                        <div className="stat-card">
-                            <div className="stat-value">{stats.seatsPayable}</div>
-                            <div className="stat-label">Lugares pagables</div>
+                        <div style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                            <div style={{ fontSize: '2rem', fontWeight: '800', color: '#2e7d32', lineHeight: 1 }}>${(stats.totalPaid / 1000).toFixed(1)}k</div>
+                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600', marginTop: '0.25rem' }}>PAGADO</div>
                         </div>
-                        <div className="stat-card">
-                            <div className="stat-value" style={{ fontSize: '1.25rem' }}>
-                                ${stats.totalAmount.toLocaleString('es-MX')}
-                            </div>
-                            <div className="stat-label">Total comprometido</div>
-                        </div>
-                        <div className="stat-card">
-                            <div className="stat-value" style={{ fontSize: '1.25rem', color: '#2e7d32' }}>
-                                ${stats.totalPaid.toLocaleString('es-MX')}
-                            </div>
-                            <div className="stat-label">Total pagado</div>
-                        </div>
-                        <div className="stat-card">
-                            <div className="stat-value" style={{ color: stats.pendingDeposits > 0 ? '#f57c00' : 'inherit' }}>
+                        <div style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                            <div style={{ fontSize: '2rem', fontWeight: '800', color: stats.pendingDeposits > 0 ? '#f59e0b' : '#2c3e50', lineHeight: 1 }}>
                                 {stats.pendingDeposits}
                             </div>
-                            <div className="stat-label">Anticipos pendientes</div>
+                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600', marginTop: '0.25rem' }}>ANTICIPOS PEND.</div>
                         </div>
                     </div>
                 )}
 
-                {/* Quick Actions */}
-                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                {/* Navigation Buttons */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '2rem' }}>
                     <Link
                         href="/admin/reservaciones"
-                        className="nav-button"
-                        style={{ textDecoration: 'none' }}
+                        style={{
+                            background: '#3b82f6',
+                            color: 'white',
+                            padding: '1rem',
+                            borderRadius: '12px',
+                            textDecoration: 'none',
+                            textAlign: 'center',
+                            fontWeight: '600',
+                            boxShadow: '0 4px 6px -1px rgba(59, 130, 246, 0.2)'
+                        }}
                     >
-                        Ver reservaciones
-                    </Link>
-                    <Link
-                        href="/admin/grupos"
-                        className="nav-button secondary"
-                        style={{ textDecoration: 'none' }}
-                    >
-                        Grupos de tour
+                        Reservaciones
                     </Link>
                     <Link
                         href="/admin/abordaje"
-                        className="nav-button"
-                        style={{ textDecoration: 'none', background: '#2e7d32', color: 'white' }}
+                        style={{
+                            background: '#10b981',
+                            color: 'white',
+                            padding: '1rem',
+                            borderRadius: '12px',
+                            textDecoration: 'none',
+                            textAlign: 'center',
+                            fontWeight: '600',
+                            boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)'
+                        }}
                     >
-                        Control de Abordaje
+                        Abordaje
+                    </Link>
+                    <Link
+                        href="/admin/grupos"
+                        style={{
+                            background: 'white',
+                            color: '#475569',
+                            padding: '1rem',
+                            borderRadius: '12px',
+                            textDecoration: 'none',
+                            textAlign: 'center',
+                            fontWeight: '600',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                            gridColumn: '1 / -1'
+                        }}
+                    >
+                        Gestionar Grupos de Tour
                     </Link>
                 </div>
 
-                {/* Recent Reservations */}
-                <div className="card">
-                    <h2 className="section-title">Reservaciones recientes</h2>
+                {/* Recent List - Mobile Optimized */}
+                <h2 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1a1a1a', marginBottom: '1rem' }}>Recientes</h2>
 
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {recentReservations.length === 0 ? (
-                        <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
-                            No hay reservaciones aún
-                        </p>
-                    ) : (
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                                <thead>
-                                    <tr style={{ borderBottom: '2px solid var(--border-color)', textAlign: 'left' }}>
-                                        <th style={{ padding: '0.75rem 0.5rem', fontWeight: '600' }}>Código</th>
-                                        <th style={{ padding: '0.75rem 0.5rem', fontWeight: '600' }}>Responsable</th>
-                                        <th style={{ padding: '0.75rem 0.5rem', fontWeight: '600', textAlign: 'center' }}>Lugares</th>
-                                        <th style={{ padding: '0.75rem 0.5rem', fontWeight: '600', textAlign: 'right' }}>Total</th>
-                                        <th style={{ padding: '0.75rem 0.5rem', fontWeight: '600', textAlign: 'center' }}>Estatus</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {recentReservations.map((r) => (
-                                        <tr key={r.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                            <td style={{ padding: '0.75rem 0.5rem' }}>
-                                                <Link
-                                                    href={`/admin/reservaciones/${r.id}`}
-                                                    style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: '500' }}
-                                                >
-                                                    {r.reservation_code}
-                                                </Link>
-                                            </td>
-                                            <td style={{ padding: '0.75rem 0.5rem' }}>
-                                                <div>{r.responsible_name}</div>
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                                    {r.responsible_phone}
-                                                </div>
-                                            </td>
-                                            <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-                                                {r.seats_payable}/{r.seats_total}
-                                            </td>
-                                            <td style={{ padding: '0.75rem 0.5rem', textAlign: 'right', fontWeight: '500' }}>
-                                                ${r.total_amount.toLocaleString('es-MX')}
-                                            </td>
-                                            <td style={{ padding: '0.75rem 0.5rem', textAlign: 'center' }}>
-                                                <span className={`status-badge status-${r.status}`}>
-                                                    {getStatusLabel(r.status)}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div style={{ textAlign: 'center', color: '#94a3b8', padding: '2rem', background: 'white', borderRadius: '12px' }}>
+                            Sin reservaciones
                         </div>
+                    ) : (
+                        recentReservations.map((r) => (
+                            <Link
+                                href={`/admin/reservaciones/${r.id}`}
+                                key={r.id}
+                                style={{ textDecoration: 'none' }}
+                            >
+                                <div style={{
+                                    background: 'white',
+                                    padding: '1rem',
+                                    borderRadius: '12px',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}>
+                                    <div>
+                                        <div style={{ fontWeight: '700', color: '#334155', fontSize: '1rem' }}>{r.responsible_name}</div>
+                                        <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '2px' }}>
+                                            {r.reservation_code} • {r.seats_total} lugares
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'right' }}>
+                                        <div style={{ fontWeight: '700', color: '#0f172a' }}>${r.total_amount.toLocaleString()}</div>
+                                        <span style={{
+                                            display: 'inline-block',
+                                            fontSize: '0.75rem',
+                                            padding: '2px 8px',
+                                            borderRadius: '10px',
+                                            fontWeight: '600',
+                                            marginTop: '4px',
+                                            background: r.status === 'pagado_completo' ? '#dcfce7' : r.status === 'anticipo_pagado' ? '#e0f2fe' : '#f1f5f9',
+                                            color: r.status === 'pagado_completo' ? '#166534' : r.status === 'anticipo_pagado' ? '#0369a1' : '#475569'
+                                        }}>
+                                            {getStatusLabel(r.status)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))
                     )}
                 </div>
             </main>
