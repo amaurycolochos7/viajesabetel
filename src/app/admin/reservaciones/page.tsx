@@ -28,6 +28,20 @@ export default function ReservacionesPage() {
             return
         }
 
+        // ✅ SEGURIDAD: Verificar que el usuario es admin registrado
+        const { data: adminUser, error: adminError } = await supabase
+            .from('admin_users')
+            .select('email')
+            .eq('email', session.user.email)
+            .single()
+
+        if (adminError || !adminUser) {
+            console.error('Usuario no es administrador:', session.user.email)
+            await supabase.auth.signOut()
+            router.push('/admin/login')
+            return
+        }
+
         setUserEmail(session.user.email || '')
 
         const { data, error } = await supabase
