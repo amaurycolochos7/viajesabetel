@@ -303,6 +303,41 @@ function BuyTicketsContent() {
 
                 <div style={{ padding: '2rem' }}>
 
+                    {/* Payment Deadline Notice - Dos tarjetas visuales */}
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <h4 style={{ margin: '0 0 0.75rem 0', color: '#c62828', fontSize: '0.85rem', fontWeight: 'bold', textAlign: 'center' }}>
+                            FECHAS LÍMITE
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                            {/* Tarjeta 1: Adelanto 50% */}
+                            <div style={{
+                                background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+                                borderRadius: '10px',
+                                padding: '0.75rem',
+                                textAlign: 'center',
+                                color: 'white',
+                                boxShadow: '0 3px 10px rgba(255, 152, 0, 0.3)'
+                            }}>
+                                <div style={{ fontSize: '0.65rem', fontWeight: 'bold', marginBottom: '0.15rem' }}>ADELANTO 50%</div>
+                                <div style={{ fontSize: '0.55rem', textTransform: 'uppercase', opacity: 0.9, marginBottom: '0.2rem' }}>Fecha Límite</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: '900' }}>25 ENE 2026</div>
+                            </div>
+                            {/* Tarjeta 2: Liquidar viaje */}
+                            <div style={{
+                                background: 'linear-gradient(135deg, #e53935 0%, #c62828 100%)',
+                                borderRadius: '10px',
+                                padding: '0.75rem',
+                                textAlign: 'center',
+                                color: 'white',
+                                boxShadow: '0 3px 10px rgba(229, 57, 53, 0.3)'
+                            }}>
+                                <div style={{ fontSize: '0.65rem', fontWeight: 'bold', marginBottom: '0.15rem' }}>LIQUIDAR VIAJE</div>
+                                <div style={{ fontSize: '0.55rem', textTransform: 'uppercase', opacity: 0.9, marginBottom: '0.2rem' }}>Fecha Límite</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: '900' }}>23 MAR 2026</div>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* STEP 1: LOOKUP */}
                     {step === 'lookup' && (
                         <form onSubmit={handleLookup}>

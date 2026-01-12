@@ -388,7 +388,7 @@ export default function ReservarPage() {
                             <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.5rem' }}>Menores de 5 años viajan gratis en piernas. Se requiere registro.</p>
                         </div>
 
-                        <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px', marginBottom: '2rem' }}>
+                        <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px', marginBottom: '1rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                                 <span>Total asientos:</span>
                                 <strong>{totalSeats}</strong>
@@ -396,6 +396,43 @@ export default function ReservarPage() {
                             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--primary)' }}>
                                 <span>Total a pagar:</span>
                                 <span>${formatMoney(totalAmount)}</span>
+                            </div>
+                        </div>
+
+                        {/* Payment Deadline Notice - Dos tarjetas visuales */}
+                        <div style={{ marginBottom: '2rem' }}>
+                            <h4 style={{ margin: '0 0 1rem 0', color: '#c62828', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
+                                FECHAS LÍMITE IMPORTANTES
+                            </h4>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                {/* Tarjeta 1: Adelanto 50% */}
+                                <div style={{
+                                    background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+                                    borderRadius: '12px',
+                                    padding: '1rem',
+                                    textAlign: 'center',
+                                    color: 'white',
+                                    boxShadow: '0 4px 12px rgba(255, 152, 0, 0.4)'
+                                }}>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>ADELANTO 50%</div>
+                                    <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.25rem' }}>Fecha Límite</div>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: '900' }}>25 ENERO</div>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>2026</div>
+                                </div>
+                                {/* Tarjeta 2: Liquidar viaje */}
+                                <div style={{
+                                    background: 'linear-gradient(135deg, #e53935 0%, #c62828 100%)',
+                                    borderRadius: '12px',
+                                    padding: '1rem',
+                                    textAlign: 'center',
+                                    color: 'white',
+                                    boxShadow: '0 4px 12px rgba(229, 57, 53, 0.4)'
+                                }}>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>LIQUIDAR VIAJE</div>
+                                    <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.25rem' }}>Fecha Límite</div>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: '900' }}>23 MARZO</div>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>2026</div>
+                                </div>
                             </div>
                         </div>
 
@@ -489,493 +526,589 @@ export default function ReservarPage() {
                             Continuar
                         </button>
                     </div>
-                )}
+                )
+                }
 
                 {/* STEP 2: Additional Passengers */}
-                {step === 'passengers' && (
-                    <div className="fade-in">
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1.5rem' }}>Datos de los viajeros</h2>
+                {
+                    step === 'passengers' && (
+                        <div className="fade-in">
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1.5rem' }}>Datos de los viajeros</h2>
 
-                        <div style={{ marginBottom: '2rem' }}>
-                            <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--primary)' }}>Responsable de la reserva</h3>
-                            <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
-                                <p style={{ margin: 0, fontWeight: '600' }}>{responsibleName} {responsibleLastName} ({responsibleAge} años)</p>
-                                <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>{responsiblePhone}</p>
-                            </div>
-                        </div>
-
-                        {passengers.map((p, idx) => (
-                            // Skip default responsible slot unless logic dictates otherwise, but typically passengers[0] is responsible
-                            // If user is alone, we skip this step entirely in initPassengers
-                            (idx > 0) && (
-                                <div key={idx} style={{ marginBottom: '2rem', borderTop: '1px solid #eee', paddingTop: '1.5rem' }}>
-                                    <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem' }}>
-                                        {p.passenger_type === 'infant'
-                                            ? `Bebé ${passengers.slice(0, idx + 1).filter(x => x.passenger_type === 'infant').length}`
-                                            : p.passenger_type === 'child'
-                                                ? `Niño ${passengers.slice(0, idx + 1).filter(x => x.passenger_type === 'child').length}`
-                                                : `Adulto ${passengers.slice(0, idx + 1).filter(x => x.passenger_type === 'adult').length}`
-                                        }
-                                    </h3>
-                                    <div style={{ display: 'grid', gap: '1rem' }}>
-                                        <input
-                                            type="text"
-                                            placeholder="Nombre"
-                                            className="form-input"
-                                            value={p.first_name}
-                                            onChange={e => updatePassenger(idx, 'first_name', e.target.value)}
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Apellidos"
-                                            className="form-input"
-                                            value={p.last_name}
-                                            onChange={e => updatePassenger(idx, 'last_name', e.target.value)}
-                                        />
-                                        <input
-                                            type="number"
-                                            className="form-input"
-                                            placeholder="Edad"
-                                            value={p.age ?? ''}
-                                            onChange={(e) => updatePassenger(idx, 'age', e.target.value)}
-                                            min={0}
-                                        />
-                                    </div>
+                            <div style={{ marginBottom: '2rem' }}>
+                                <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--primary)' }}>Responsable de la reserva</h3>
+                                <div style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px' }}>
+                                    <p style={{ margin: 0, fontWeight: '600' }}>{responsibleName} {responsibleLastName} ({responsibleAge} años)</p>
+                                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#666' }}>{responsiblePhone}</p>
                                 </div>
-                            )
-                        ))}
+                            </div>
 
-                        <button
-                            className="cta-button"
-                            style={{ width: '100%' }}
-                            onClick={() => {
-                                const hasEmptyFields = passengers.slice(1).some(p => !p.first_name || !p.last_name)
-                                if (hasEmptyFields) {
-                                    alert('Por favor completa los nombres y apellidos de todos los viajeros extra.')
-                                    return
-                                }
-                                setStep('summary')
-                            }}
-                            disabled={isLoading}
-                        >
-                            Continuar
-                        </button>
-                    </div>
-                )}
+                            {passengers.map((p, idx) => (
+                                // Skip default responsible slot unless logic dictates otherwise, but typically passengers[0] is responsible
+                                // If user is alone, we skip this step entirely in initPassengers
+                                (idx > 0) && (
+                                    <div key={idx} style={{ marginBottom: '2rem', borderTop: '1px solid #eee', paddingTop: '1.5rem' }}>
+                                        <h3 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1rem' }}>
+                                            {p.passenger_type === 'infant'
+                                                ? `Bebé ${passengers.slice(0, idx + 1).filter(x => x.passenger_type === 'infant').length}`
+                                                : p.passenger_type === 'child'
+                                                    ? `Niño ${passengers.slice(0, idx + 1).filter(x => x.passenger_type === 'child').length}`
+                                                    : `Adulto ${passengers.slice(0, idx + 1).filter(x => x.passenger_type === 'adult').length}`
+                                            }
+                                        </h3>
+                                        <div style={{ display: 'grid', gap: '1rem' }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Nombre"
+                                                className="form-input"
+                                                value={p.first_name}
+                                                onChange={e => updatePassenger(idx, 'first_name', e.target.value)}
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Apellidos"
+                                                className="form-input"
+                                                value={p.last_name}
+                                                onChange={e => updatePassenger(idx, 'last_name', e.target.value)}
+                                            />
+                                            <input
+                                                type="number"
+                                                className="form-input"
+                                                placeholder="Edad"
+                                                value={p.age ?? ''}
+                                                onChange={(e) => updatePassenger(idx, 'age', e.target.value)}
+                                                min={0}
+                                            />
+                                        </div>
+                                    </div>
+                                )
+                            ))}
 
-                {/* STEP 3: Summary (Optional, but good for review) */}
-                {step === 'summary' && (
-                    <div className="fade-in">
-                        <h2 className="section-title">Confirma los datos</h2>
-                        <div className="summary-row">
-                            <span>Total asientos</span>
-                            <strong>{totalSeats}</strong>
-                        </div>
-                        <div className="summary-row">
-                            <span>Total a pagar</span>
-                            <strong>${totalAmount.toLocaleString('es-MX')}</strong>
-                        </div>
-
-                        <div style={{ marginTop: '1.5rem' }}>
                             <button
-                                onClick={() => setStep('terms')}
                                 className="cta-button"
                                 style={{ width: '100%' }}
+                                onClick={() => {
+                                    const hasEmptyFields = passengers.slice(1).some(p => !p.first_name || !p.last_name)
+                                    if (hasEmptyFields) {
+                                        alert('Por favor completa los nombres y apellidos de todos los viajeros extra.')
+                                        return
+                                    }
+                                    setStep('summary')
+                                }}
+                                disabled={isLoading}
                             >
                                 Continuar
                             </button>
                         </div>
-                    </div>
-                )}
+                    )
+                }
+
+                {/* STEP 3: Summary (Optional, but good for review) */}
+                {
+                    step === 'summary' && (
+                        <div className="fade-in">
+                            <h2 className="section-title">Confirma los datos</h2>
+                            <div className="summary-row">
+                                <span>Total asientos</span>
+                                <strong>{totalSeats}</strong>
+                            </div>
+                            <div className="summary-row">
+                                <span>Total a pagar</span>
+                                <strong>${totalAmount.toLocaleString('es-MX')}</strong>
+                            </div>
+
+                            <div style={{ marginTop: '1.5rem' }}>
+                                <button
+                                    onClick={() => setStep('terms')}
+                                    className="cta-button"
+                                    style={{ width: '100%' }}
+                                >
+                                    Continuar
+                                </button>
+                            </div>
+                        </div>
+                    )
+                }
 
                 {/* STEP 4: Terms and Conditions */}
-                {step === 'terms' && (
-                    <div className="fade-in">
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#1a1a1a' }}>
-                            Términos y Condiciones
-                        </h2>
+                {
+                    step === 'terms' && (
+                        <div className="fade-in">
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#1a1a1a' }}>
+                                Términos y Condiciones
+                            </h2>
 
 
 
-                        <label style={{
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            gap: '0.75rem',
-                            padding: '1rem',
-                            background: termsAccepted ? '#e8f5e9' : '#fff',
-                            border: termsAccepted ? '2px solid #4caf50' : '1px solid #e0e0e0',
-                            borderRadius: '12px',
-                            cursor: 'pointer',
-                            marginBottom: '1.5rem',
-                            transition: 'all 0.2s ease'
-                        }}>
-                            <input
-                                type="checkbox"
-                                checked={termsAccepted}
-                                onChange={(e) => setTermsAccepted(e.target.checked)}
-                                style={{
-                                    width: '20px',
-                                    height: '20px',
-                                    marginTop: '2px',
-                                    accentColor: '#4caf50'
-                                }}
-                            />
-                            <span style={{ fontSize: '0.9rem', color: '#333', lineHeight: '1.5' }}>
-                                Al registrarme, confirmo que he proporcionado información veraz, acepto las condiciones del viaje y entiendo que <strong>las entradas a parques, acuario y alimentos no están incluidos</strong> en el costo del tour.
-                            </span>
-                        </label>
-
-                        <button
-                            onClick={handleCreateReservation}
-                            className="cta-button"
-                            style={{
-                                width: '100%',
-                                opacity: termsAccepted ? 1 : 0.5,
-                                cursor: termsAccepted ? 'pointer' : 'not-allowed'
-                            }}
-                            disabled={!termsAccepted || isLoading}
-                        >
-                            {isLoading ? 'Creando reservación...' : 'Acepto y Continuar'}
-                        </button>
-
-                        {!termsAccepted && (
-                            <p style={{
-                                textAlign: 'center',
-                                fontSize: '0.85rem',
-                                color: '#e53935',
-                                marginTop: '1rem'
+                            <label style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '0.75rem',
+                                padding: '1rem',
+                                background: termsAccepted ? '#e8f5e9' : '#fff',
+                                border: termsAccepted ? '2px solid #4caf50' : '1px solid #e0e0e0',
+                                borderRadius: '12px',
+                                cursor: 'pointer',
+                                marginBottom: '1.5rem',
+                                transition: 'all 0.2s ease'
                             }}>
-                                Debes aceptar los términos y condiciones para continuar
-                            </p>
-                        )}
-                    </div>
-                )}
+                                <input
+                                    type="checkbox"
+                                    checked={termsAccepted}
+                                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                                    style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        marginTop: '2px',
+                                        accentColor: '#4caf50'
+                                    }}
+                                />
+                                <span style={{ fontSize: '0.9rem', color: '#333', lineHeight: '1.5' }}>
+                                    Al registrarme, confirmo que he proporcionado información veraz, acepto las condiciones del viaje y entiendo que <strong>las entradas a parques, acuario y alimentos no están incluidos</strong> en el costo del tour.
+                                </span>
+                            </label>
 
-                {/* STEP 4: Payment */}
-                {step === 'payment' && result && (
-                    <div className="fade-in">
-                        <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', fontWeight: 'bold', color: '#1a1a1a' }}>Método de pago</h2>
-
-                        <div style={{ background: 'linear-gradient(135deg, #f0f7ff 0%, #fff 100%)', border: '2px solid var(--primary)', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.7rem', color: '#666', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.25rem' }}>Tu código de reservación</div>
-                            <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--primary)', fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: '0.75rem' }}>
-                                {result.reservation_code}
-                            </div>
-                            <div style={{ borderTop: '1px solid #e0e0e0', paddingTop: '0.75rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontSize: '0.8rem', color: '#666' }}>Total a pagar:</span>
-                                <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>${formatMoney(totalAmount)}</span>
-                            </div>
-                        </div>
-
-                        <div style={{ marginBottom: '2rem' }}>
-                            {/* Payment Deadline Notice */}
-                            <div style={{ background: '#fff3e0', border: '1px solid #ffb74d', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                <div style={{ fontSize: '2rem' }}>⚠️</div>
-                                <div>
-                                    <h4 style={{ margin: '0 0 0.25rem 0', color: '#e65100', fontSize: '1rem', fontWeight: 'bold' }}>FECHA LÍMITE DE PAGO: 23 DE MARZO 2026</h4>
-                                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#ef6c00' }}>
-                                        Si eliges pagar el anticipo (50%), debes liquidar el resto antes de esta fecha. Contacta al administrador para tus siguientes pagos.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <label className="form-label" style={{ marginBottom: '1rem', display: 'block', fontWeight: '600' }}>¿Cuánto deseas pagar hoy?</label>
-                            <div style={{ display: 'grid', gap: '1rem' }}>
-                                {/* Option 1: Deposit */}
-                                <label style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '1rem',
-                                    padding: '1.25rem',
-                                    border: isDeposit ? '2px solid var(--primary)' : '1px solid #e0e0e0',
-                                    borderRadius: '12px',
-                                    cursor: 'pointer',
-                                    background: isDeposit ? '#f0f7ff' : 'white',
-                                    transition: 'all 0.2s ease',
-                                    boxShadow: isDeposit ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
-                                }}>
-                                    <div style={{
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        width: '24px', height: '24px', borderRadius: '50%',
-                                        border: isDeposit ? '6px solid var(--primary)' : '2px solid #ccc',
-                                        background: 'white'
-                                    }}></div>
-                                    <input
-                                        type="radio"
-                                        name="paymentType"
-                                        checked={isDeposit}
-                                        onChange={() => setIsDeposit(true)}
-                                        style={{ display: 'none' }}
-                                    />
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: '600', fontSize: '1.1rem', color: isDeposit ? 'var(--primary-dark)' : 'inherit' }}>Pagar Anticipo (50%)</div>
-                                        <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.2rem' }}>Liquidas antes del viaje</div>
-                                    </div>
-                                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: isDeposit ? 'var(--primary)' : '#333' }}>
-                                        ${formatMoney(result.deposit_required)}
-                                    </div>
-                                </label>
-
-                                {/* Option 2: Full Payment */}
-                                <label style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '1rem',
-                                    padding: '1.25rem',
-                                    border: !isDeposit ? '2px solid var(--primary)' : '1px solid #e0e0e0',
-                                    borderRadius: '12px',
-                                    cursor: 'pointer',
-                                    background: !isDeposit ? '#f0f7ff' : 'white',
-                                    transition: 'all 0.2s ease',
-                                    boxShadow: !isDeposit ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
-                                }}>
-                                    <div style={{
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        width: '24px', height: '24px', borderRadius: '50%',
-                                        border: !isDeposit ? '6px solid var(--primary)' : '2px solid #ccc',
-                                        background: 'white'
-                                    }}></div>
-                                    <input
-                                        type="radio"
-                                        name="paymentType"
-                                        checked={!isDeposit}
-                                        onChange={() => setIsDeposit(false)}
-                                        style={{ display: 'none' }}
-                                    />
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: '600', fontSize: '1.1rem', color: !isDeposit ? 'var(--primary-dark)' : 'inherit' }}>Pagar Completo (100%)</div>
-                                        <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.2rem' }}>¡Dejas todo listo!</div>
-                                    </div>
-                                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: !isDeposit ? 'var(--primary)' : '#333' }}>
-                                        ${formatMoney(result.total_amount)}
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'grid', gap: '1rem' }}>
                             <button
-                                onClick={() => {
-                                    setPaymentMethod('card')
-                                }}
+                                onClick={handleCreateReservation}
                                 className="cta-button"
                                 style={{
-                                    background: paymentMethod === 'card' ? 'linear-gradient(135deg, #009ee3 0%, #007bb0 100%)' : 'white',
-                                    color: paymentMethod === 'card' ? 'white' : '#009ee3',
-                                    border: paymentMethod === 'card' ? 'none' : '2px solid #009ee3',
-                                    padding: '1rem',
-                                    fontSize: '1.1rem',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
-                                    boxShadow: paymentMethod === 'card' ? '0 4px 6px rgba(0,158,227, 0.2)' : 'none'
+                                    width: '100%',
+                                    opacity: termsAccepted ? 1 : 0.5,
+                                    cursor: termsAccepted ? 'pointer' : 'not-allowed'
                                 }}
-                                disabled={isLoading}
+                                disabled={!termsAccepted || isLoading}
                             >
-                                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                </svg>
-                                {isLoading ? 'Procesando...' : (
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.2' }}>
-                                        <span>Pagar con Tarjeta (Mercado Pago)</span>
-                                        <span style={{ fontSize: '0.85rem', opacity: 0.9, fontWeight: 'normal' }}>(+ 5% de comisión)</span>
+                                {isLoading ? 'Creando reservación...' : 'Acepto y Continuar'}
+                            </button>
+
+                            {!termsAccepted && (
+                                <p style={{
+                                    textAlign: 'center',
+                                    fontSize: '0.85rem',
+                                    color: '#e53935',
+                                    marginTop: '1rem'
+                                }}>
+                                    Debes aceptar los términos y condiciones para continuar
+                                </p>
+                            )}
+                        </div>
+                    )
+                }
+
+                {/* STEP 4: Payment */}
+                {
+                    step === 'payment' && result && (
+                        <div className="fade-in">
+                            <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', fontWeight: 'bold', color: '#1a1a1a' }}>Método de pago</h2>
+
+                            <div style={{ background: 'linear-gradient(135deg, #f0f7ff 0%, #fff 100%)', border: '2px solid var(--primary)', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', textAlign: 'center' }}>
+                                <div style={{ fontSize: '0.7rem', color: '#666', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.25rem' }}>Tu código de reservación</div>
+                                <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--primary)', fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: '0.75rem' }}>
+                                    {result.reservation_code}
+                                </div>
+                                <div style={{ borderTop: '1px solid #e0e0e0', paddingTop: '0.75rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+                                    <span style={{ fontSize: '0.8rem', color: '#666' }}>Total a pagar:</span>
+                                    <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>${formatMoney(totalAmount)}</span>
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '2rem' }}>
+                                {/* Payment Deadline Notice - Tarjetas grandes y visuales */}
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <h4 style={{ margin: '0 0 1rem 0', color: '#c62828', fontSize: '1.1rem', fontWeight: 'bold', textAlign: 'center' }}>
+                                        FECHAS LÍMITE DE PAGO
+                                    </h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        {/* Tarjeta 1: Adelanto 50% */}
+                                        <div style={{
+                                            background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+                                            borderRadius: '16px',
+                                            padding: '1.25rem 1rem',
+                                            textAlign: 'center',
+                                            color: 'white',
+                                            boxShadow: '0 6px 20px rgba(255, 152, 0, 0.35)'
+                                        }}>
+
+                                            <div style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                                                ADELANTO 50%
+                                            </div>
+                                            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.5rem' }}>
+                                                Fecha Límite
+                                            </div>
+                                            <div style={{ fontSize: '1.75rem', fontWeight: '900', lineHeight: 1 }}>25 ENERO</div>
+                                            <div style={{ fontSize: '1rem', fontWeight: '600', marginTop: '0.25rem' }}>2026</div>
+                                            <div style={{ fontSize: '0.7rem', marginTop: '0.5rem', opacity: 0.85 }}>
+                                                Para asegurar tu lugar
+                                            </div>
+                                        </div>
+                                        {/* Tarjeta 2: Liquidar viaje */}
+                                        <div style={{
+                                            background: 'linear-gradient(135deg, #e53935 0%, #b71c1c 100%)',
+                                            borderRadius: '16px',
+                                            padding: '1.25rem 1rem',
+                                            textAlign: 'center',
+                                            color: 'white',
+                                            boxShadow: '0 6px 20px rgba(229, 57, 53, 0.35)'
+                                        }}>
+
+                                            <div style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                                                LIQUIDAR VIAJE
+                                            </div>
+                                            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.5rem' }}>
+                                                Fecha Límite
+                                            </div>
+                                            <div style={{ fontSize: '1.75rem', fontWeight: '900', lineHeight: 1 }}>23 MARZO</div>
+                                            <div style={{ fontSize: '1rem', fontWeight: '600', marginTop: '0.25rem' }}>2026</div>
+                                            <div style={{ fontSize: '0.7rem', marginTop: '0.5rem', opacity: 0.85 }}>
+                                                Para tener todo listo
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <label className="form-label" style={{ marginBottom: '1rem', display: 'block', fontWeight: '600' }}>¿Cuánto deseas pagar hoy?</label>
+                                <div style={{ display: 'grid', gap: '1rem' }}>
+                                    {/* Option 1: Deposit */}
+                                    <label style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '1rem',
+                                        padding: '1.25rem',
+                                        border: isDeposit ? '2px solid var(--primary)' : '1px solid #e0e0e0',
+                                        borderRadius: '12px',
+                                        cursor: 'pointer',
+                                        background: isDeposit ? '#f0f7ff' : 'white',
+                                        transition: 'all 0.2s ease',
+                                        boxShadow: isDeposit ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
+                                    }}>
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            width: '24px', height: '24px', borderRadius: '50%',
+                                            border: isDeposit ? '6px solid var(--primary)' : '2px solid #ccc',
+                                            background: 'white'
+                                        }}></div>
+                                        <input
+                                            type="radio"
+                                            name="paymentType"
+                                            checked={isDeposit}
+                                            onChange={() => setIsDeposit(true)}
+                                            style={{ display: 'none' }}
+                                        />
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: '600', fontSize: '1.1rem', color: isDeposit ? 'var(--primary-dark)' : 'inherit' }}>Pagar Anticipo (50%)</div>
+                                            <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.2rem' }}>Liquidas antes del viaje</div>
+                                        </div>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: isDeposit ? 'var(--primary)' : '#333' }}>
+                                            ${formatMoney(result.deposit_required)}
+                                        </div>
+                                    </label>
+
+                                    {/* Option 2: Full Payment */}
+                                    <label style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '1rem',
+                                        padding: '1.25rem',
+                                        border: !isDeposit ? '2px solid var(--primary)' : '1px solid #e0e0e0',
+                                        borderRadius: '12px',
+                                        cursor: 'pointer',
+                                        background: !isDeposit ? '#f0f7ff' : 'white',
+                                        transition: 'all 0.2s ease',
+                                        boxShadow: !isDeposit ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none'
+                                    }}>
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            width: '24px', height: '24px', borderRadius: '50%',
+                                            border: !isDeposit ? '6px solid var(--primary)' : '2px solid #ccc',
+                                            background: 'white'
+                                        }}></div>
+                                        <input
+                                            type="radio"
+                                            name="paymentType"
+                                            checked={!isDeposit}
+                                            onChange={() => setIsDeposit(false)}
+                                            style={{ display: 'none' }}
+                                        />
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ fontWeight: '600', fontSize: '1.1rem', color: !isDeposit ? 'var(--primary-dark)' : 'inherit' }}>Pagar Completo (100%)</div>
+                                            <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.2rem' }}>¡Dejas todo listo!</div>
+                                        </div>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: !isDeposit ? 'var(--primary)' : '#333' }}>
+                                            ${formatMoney(result.total_amount)}
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gap: '1rem' }}>
+                                <button
+                                    onClick={() => {
+                                        setPaymentMethod('card')
+                                    }}
+                                    className="cta-button"
+                                    style={{
+                                        background: paymentMethod === 'card' ? 'linear-gradient(135deg, #009ee3 0%, #007bb0 100%)' : 'white',
+                                        color: paymentMethod === 'card' ? 'white' : '#009ee3',
+                                        border: paymentMethod === 'card' ? 'none' : '2px solid #009ee3',
+                                        padding: '1rem',
+                                        fontSize: '1.1rem',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+                                        boxShadow: paymentMethod === 'card' ? '0 4px 6px rgba(0,158,227, 0.2)' : 'none'
+                                    }}
+                                    disabled={isLoading}
+                                >
+                                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                    </svg>
+                                    {isLoading ? 'Procesando...' : (
+                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.2' }}>
+                                            <span>Pagar con Tarjeta (Mercado Pago)</span>
+                                            <span style={{ fontSize: '0.85rem', opacity: 0.9, fontWeight: 'normal' }}>(+ 5% de comisión)</span>
+                                        </div>
+                                    )}
+                                </button>
+
+                                {/* Commission/Total Display for Card */}
+                                {paymentMethod === 'card' && (
+                                    <div className="fade-in" style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px', border: '1px solid #e9ecef', marginTop: '-0.5rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: '#666' }}>
+                                            <span>Monto a pagar:</span>
+                                            <span>${formatMoney(isDeposit ? result.deposit_required : result.total_amount)}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: '#666' }}>
+                                            <span>Comisión por tarjeta (5%):</span>
+                                            <span>${formatMoney((isDeposit ? result.deposit_required : result.total_amount) * 0.05)}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #dee2e6', fontWeight: 'bold', color: '#333', fontSize: '1.1rem' }}>
+                                            <span>Total a cobrar:</span>
+                                            <span>${formatMoney((isDeposit ? result.deposit_required : result.total_amount) * 1.05)}</span>
+                                        </div>
+
+                                        <button
+                                            onClick={handlePayWithCard}
+                                            style={{
+                                                width: '100%',
+                                                marginTop: '1rem',
+                                                padding: '0.75rem',
+                                                background: '#009ee3',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                cursor: 'pointer',
+                                                fontWeight: '600'
+                                            }}
+                                        >
+                                            Confirmar Pago con Tarjeta
+                                        </button>
                                     </div>
                                 )}
-                            </button>
 
-                            {/* Commission/Total Display for Card */}
-                            {paymentMethod === 'card' && (
-                                <div className="fade-in" style={{ background: '#f8f9fa', padding: '1rem', borderRadius: '8px', border: '1px solid #e9ecef', marginTop: '-0.5rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: '#666' }}>
-                                        <span>Monto a pagar:</span>
-                                        <span>${formatMoney(isDeposit ? result.deposit_required : result.total_amount)}</span>
+                                <button
+                                    onClick={handlePayWithTransfer}
+                                    className="nav-button"
+                                    style={{
+                                        width: '100%',
+                                        justifyContent: 'center',
+                                        background: 'white',
+                                        color: 'var(--primary)',
+                                        border: '2px solid var(--border-color)',
+                                        padding: '1rem',
+                                        fontSize: '1rem',
+                                        height: 'auto'
+                                    }}
+                                >
+                                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                    </svg>
+                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.2' }}>
+                                        <span>Pagar con Transferencia</span>
+                                        <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>(Sin comisión)</span>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: '#666' }}>
-                                        <span>Comisión por tarjeta (5%):</span>
-                                        <span>${formatMoney((isDeposit ? result.deposit_required : result.total_amount) * 0.05)}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px solid #dee2e6', fontWeight: 'bold', color: '#333', fontSize: '1.1rem' }}>
-                                        <span>Total a cobrar:</span>
-                                        <span>${formatMoney((isDeposit ? result.deposit_required : result.total_amount) * 1.05)}</span>
-                                    </div>
-
-                                    <button
-                                        onClick={handlePayWithCard}
-                                        style={{
-                                            width: '100%',
-                                            marginTop: '1rem',
-                                            padding: '0.75rem',
-                                            background: '#009ee3',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '6px',
-                                            cursor: 'pointer',
-                                            fontWeight: '600'
-                                        }}
-                                    >
-                                        Confirmar Pago con Tarjeta
-                                    </button>
-                                </div>
-                            )}
-
-                            <button
-                                onClick={handlePayWithTransfer}
-                                className="nav-button"
-                                style={{
-                                    width: '100%',
-                                    justifyContent: 'center',
-                                    background: 'white',
-                                    color: 'var(--primary)',
-                                    border: '2px solid var(--border-color)',
-                                    padding: '1rem',
-                                    fontSize: '1rem',
-                                    height: 'auto'
-                                }}
-                            >
-                                <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                </svg>
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: '1.2' }}>
-                                    <span>Pagar con Transferencia</span>
-                                    <span style={{ fontSize: '0.85rem', color: '#666', fontWeight: 'normal' }}>(Sin comisión)</span>
-                                </div>
-                            </button>
+                                </button>
+                            </div>
+                            {error && <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '1rem', borderRadius: '8px', marginTop: '1rem', textAlign: 'center', border: '1px solid #fca5a5' }}>{error}</div>}
                         </div>
-                        {error && <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '1rem', borderRadius: '8px', marginTop: '1rem', textAlign: 'center', border: '1px solid #fca5a5' }}>{error}</div>}
-                    </div>
-                )}
+                    )
+                }
 
                 {/* STEP 5: Confirmation */}
-                {step === 'confirmation' && result && (
-                    <div className="fade-in" style={{ textAlign: 'center' }}>
-                        <div style={{ margin: '0 auto 1.5rem', width: '80px', height: '80px', background: '#e8f5e9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                        </div>
-
-                        <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', fontWeight: 'bold', color: '#1a1a1a' }}>¡Casi listo!</h2>
-                        <p style={{ color: '#666', marginBottom: '2rem' }}>
-                            Tu lugar ha sido apartado. <br />
-                            {paymentMethod === 'transfer' ? 'Realiza el pago para confirmar.' : 'Completa el proceso.'}
-                        </p>
-
-                        <div style={{ background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)', color: 'white', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem', boxShadow: '0 6px 12px -3px rgba(44, 62, 80, 0.25)' }}>
-                            <p style={{ opacity: 0.8, marginBottom: '0.25rem', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tu número de reservación</p>
-                            <div style={{ fontSize: '1rem', fontWeight: 'bold', letterSpacing: '0.5px', fontFamily: 'monospace' }}>
-                                {result.reservation_code}
+                {
+                    step === 'confirmation' && result && (
+                        <div className="fade-in" style={{ textAlign: 'center' }}>
+                            <div style={{ margin: '0 auto 1.5rem', width: '80px', height: '80px', background: '#e8f5e9', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
                             </div>
 
-                            {result.boarding_access_code && (
-                                <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
-                                    <p style={{ opacity: 0.9, marginBottom: '0.25rem', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#ffb74d', fontWeight: 'bold' }}>⭐ Código de abordaje ⭐</p>
-                                    <div style={{ fontSize: '1.25rem', fontWeight: '900', letterSpacing: '1px', color: '#ffcc80' }}>
-                                        {result.boarding_access_code}
+                            <h2 style={{ fontSize: '1.75rem', marginBottom: '0.5rem', fontWeight: 'bold', color: '#1a1a1a' }}>¡Casi listo!</h2>
+                            <p style={{ color: '#666', marginBottom: '2rem' }}>
+                                Tu lugar ha sido apartado. <br />
+                                {paymentMethod === 'transfer' ? 'Realiza el pago para confirmar.' : 'Completa el proceso.'}
+                            </p>
+
+                            <div style={{ background: 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)', color: 'white', padding: '1.25rem', borderRadius: '12px', marginBottom: '1.5rem', boxShadow: '0 6px 12px -3px rgba(44, 62, 80, 0.25)' }}>
+                                <p style={{ opacity: 0.8, marginBottom: '0.25rem', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tu número de reservación</p>
+                                <div style={{ fontSize: '1rem', fontWeight: 'bold', letterSpacing: '0.5px', fontFamily: 'monospace' }}>
+                                    {result.reservation_code}
+                                </div>
+
+                                {result.boarding_access_code && (
+                                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+                                        <p style={{ opacity: 0.9, marginBottom: '0.25rem', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#ffb74d', fontWeight: 'bold' }}>⭐ Código de abordaje ⭐</p>
+                                        <div style={{ fontSize: '1.25rem', fontWeight: '900', letterSpacing: '1px', color: '#ffcc80' }}>
+                                            {result.boarding_access_code}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {paymentMethod === 'transfer' && (
+                                <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                        <h3 style={{ fontWeight: '600', margin: 0, fontSize: '1.1rem', color: '#333' }}>Datos para transferencia</h3>
+                                        <button
+                                            onClick={() => setStep('payment')}
+                                            style={{ fontSize: '0.9rem', color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+                                        >
+                                            Cambiar método
+                                        </button>
+                                    </div>
+                                    <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden' }}>
+                                        <div style={{ padding: '1.25rem', borderBottom: '1px solid #eee' }}>
+                                            <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>CLABE Interbancaria</div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <span style={{ fontSize: '1.2rem', fontWeight: '600', fontFamily: 'monospace', color: '#333' }}>722969010994673004</span>
+                                                <button
+                                                    onClick={handleCopyClabe}
+                                                    style={{
+                                                        background: '#f1f2f6', border: 'none', borderRadius: '6px',
+                                                        width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        cursor: 'pointer', color: '#666'
+                                                    }}
+                                                    title="Copiar CLABE"
+                                                >
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div style={{ padding: '1.25rem', background: '#f8f9fa', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                            <div>
+                                                <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>Banco</div>
+                                                <div style={{ fontWeight: '600', color: '#333' }}>Mercado Pago</div>
+                                            </div>
+                                            <div>
+                                                <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>Beneficiario</div>
+                                                <div style={{ fontWeight: '600', color: '#333' }}>Gady Hernández</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             )}
-                        </div>
 
-                        {paymentMethod === 'transfer' && (
-                            <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                    <h3 style={{ fontWeight: '600', margin: 0, fontSize: '1.1rem', color: '#333' }}>Datos para transferencia</h3>
-                                    <button
-                                        onClick={() => setStep('payment')}
-                                        style={{ fontSize: '0.9rem', color: 'var(--primary)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
-                                    >
-                                        Cambiar método
-                                    </button>
-                                </div>
-                                <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: '12px', overflow: 'hidden' }}>
-                                    <div style={{ padding: '1.25rem', borderBottom: '1px solid #eee' }}>
-                                        <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>CLABE Interbancaria</div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <span style={{ fontSize: '1.2rem', fontWeight: '600', fontFamily: 'monospace', color: '#333' }}>722969010994673004</span>
-                                            <button
-                                                onClick={handleCopyClabe}
-                                                style={{
-                                                    background: '#f1f2f6', border: 'none', borderRadius: '6px',
-                                                    width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    cursor: 'pointer', color: '#666'
-                                                }}
-                                                title="Copiar CLABE"
-                                            >
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                                </svg>
-                                            </button>
+                            <div style={{ background: '#fff3cd', color: '#856404', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.95rem', border: '1px solid #ffeeba' }}>
+                                <p style={{ margin: 0 }}>
+                                    <strong>Importante:</strong> Envía tu comprobante por WhatsApp para confirmar tu pago y asegurar tus lugares.
+                                </p>
+                            </div>
+
+                            {/* Recordatorio visual de fechas límite en confirmación */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    <div style={{
+                                        background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+                                        borderRadius: '12px',
+                                        padding: '1.25rem 1rem',
+                                        textAlign: 'center',
+                                        color: 'white',
+                                        boxShadow: '0 6px 20px rgba(255, 152, 0, 0.35)'
+                                    }}>
+
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                                            ADELANTO 50%
                                         </div>
+                                        <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.5rem' }}>
+                                            Fecha Límite
+                                        </div>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: '900', lineHeight: 1 }}>25 ENERO</div>
+                                        <div style={{ fontSize: '1rem', fontWeight: '600', marginTop: '0.25rem' }}>2026</div>
                                     </div>
-                                    <div style={{ padding: '1.25rem', background: '#f8f9fa', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                        <div>
-                                            <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>Banco</div>
-                                            <div style={{ fontWeight: '600', color: '#333' }}>Mercado Pago</div>
+                                    {/* Tarjeta 2: Liquidar viaje */}
+                                    <div style={{
+                                        background: 'linear-gradient(135deg, #e53935 0%, #c62828 100%)',
+                                        borderRadius: '12px',
+                                        padding: '1.25rem 1rem',
+                                        textAlign: 'center',
+                                        color: 'white',
+                                        boxShadow: '0 6px 20px rgba(229, 57, 53, 0.35)'
+                                    }}>
+
+                                        <div style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
+                                            LIQUIDAR VIAJE
                                         </div>
-                                        <div>
-                                            <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>Beneficiario</div>
-                                            <div style={{ fontWeight: '600', color: '#333' }}>Gady Hernández</div>
+                                        <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.5rem' }}>
+                                            Fecha Límite
                                         </div>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: '900', lineHeight: 1 }}>23 MARZO</div>
+                                        <div style={{ fontSize: '1rem', fontWeight: '600', marginTop: '0.25rem' }}>2026</div>
                                     </div>
                                 </div>
                             </div>
-                        )}
 
-                        <div style={{ background: '#fff3cd', color: '#856404', padding: '1rem', borderRadius: '8px', marginBottom: '2rem', fontSize: '0.95rem', border: '1px solid #ffeeba' }}>
-                            <p style={{ margin: 0 }}>
-                                <strong>Importante:</strong> Envía tu comprobante por WhatsApp para confirmar tu pago y asegurar tus lugares.
-                            </p>
+                            <Link
+                                href={getWhatsAppLink(buildWhatsAppMessage(
+                                    result.reservation_code,
+                                    `${responsibleName} ${responsibleLastName}`,
+                                    responsiblePhone,
+                                    responsibleCongregation,
+                                    passengers,
+                                    result.seats_payable,
+                                    result.total_amount,
+                                    result.deposit_required
+                                ))}
+                                target="_blank"
+                                className="cta-button"
+                                style={{
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
+                                    textDecoration: 'none', marginBottom: '1rem',
+                                    background: '#25D366' // WhatsApp brand color
+                                }}
+                            >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                                </svg>
+                                Enviar comprobante por WhatsApp
+                            </Link>
+
+                            <button
+                                onClick={generateTicketImage}
+                                style={{
+                                    background: 'transparent',
+                                    border: '2px solid #e0e0e0', color: '#666',
+                                    borderRadius: '8px', padding: '0.75rem', width: '100%',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                                    cursor: 'pointer', fontSize: '0.95rem', fontWeight: '500',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Descargar Ticket
+                            </button>
+
+                            <Link href="/" style={{ color: '#999', textDecoration: 'none', display: 'block', marginTop: '1.5rem', fontSize: '0.9rem' }}>
+                                Volver al inicio
+                            </Link>
                         </div>
-
-                        <Link
-                            href={getWhatsAppLink(buildWhatsAppMessage(
-                                result.reservation_code,
-                                `${responsibleName} ${responsibleLastName}`,
-                                responsiblePhone,
-                                responsibleCongregation,
-                                passengers,
-                                result.seats_payable,
-                                result.total_amount,
-                                result.deposit_required
-                            ))}
-                            target="_blank"
-                            className="cta-button"
-                            style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem',
-                                textDecoration: 'none', marginBottom: '1rem',
-                                background: '#25D366' // WhatsApp brand color
-                            }}
-                        >
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                            </svg>
-                            Enviar comprobante por WhatsApp
-                        </Link>
-
-                        <button
-                            onClick={generateTicketImage}
-                            style={{
-                                background: 'transparent',
-                                border: '2px solid #e0e0e0', color: '#666',
-                                borderRadius: '8px', padding: '0.75rem', width: '100%',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-                                cursor: 'pointer', fontSize: '0.95rem', fontWeight: '500',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                            </svg>
-                            Descargar Ticket
-                        </button>
-
-                        <Link href="/" style={{ color: '#999', textDecoration: 'none', display: 'block', marginTop: '1.5rem', fontSize: '0.9rem' }}>
-                            Volver al inicio
-                        </Link>
-                    </div>
-                )}
-            </div>
+                    )
+                }
+            </div >
         </main >
     )
 }
@@ -1068,13 +1201,28 @@ function ReservationTicket({ result, passengers, responsibleName, responsibleLas
             {/* Deadline Notice in Ticket */}
             {isDeposit && (
                 <div style={{ marginTop: '1.5rem', background: '#fff3e0', border: '2px solid #ff9800', borderRadius: '8px', padding: '1rem', textAlign: 'center' }}>
-                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#e65100', fontWeight: 'bold', textTransform: 'uppercase' }}>⚠️ INFORMACIÓN IMPORTANTE DE PAGO ⚠️</p>
-                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '1.2rem', fontWeight: '800', color: '#ef6c00' }}>
-                        FECHA LÍMITE: 23 de Marzo, 2026
-                    </p>
-                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: '#7e3c00' }}>
-                        Debes liquidar el total del viaje antes de esta fecha.
-                    </p>
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#e65100', fontWeight: 'bold', textTransform: 'uppercase' }}>FECHAS LÍMITE DE PAGO</p>
+                    <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+                        <div>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#7e3c00' }}>Adelanto 50%</p>
+                            <p style={{ margin: '0.25rem 0 0 0', fontSize: '1.1rem', fontWeight: '800', color: '#e65100' }}>
+                                <span style={{ fontSize: '0.7rem', fontWeight: 'normal', display: 'block', textTransform: 'uppercase' }}>Fecha Límite</span>
+                                25 de Enero, 2026
+                            </p>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#7e3c00' }}>Liquidar Viaje</p>
+                            <p style={{ margin: '0.25rem 0 0 0', fontSize: '1.1rem', fontWeight: '800', color: '#ef6c00' }}>
+                                <span style={{ fontSize: '0.7rem', fontWeight: 'normal', display: 'block', textTransform: 'uppercase' }}>Fecha Límite</span>
+                                23 de Marzo, 2026
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {!isDeposit && (
+                <div style={{ marginTop: '1.5rem', background: '#e8f5e9', border: '2px solid #4caf50', borderRadius: '8px', padding: '1rem', textAlign: 'center' }}>
+                    <p style={{ margin: 0, fontSize: '1rem', color: '#2e7d32', fontWeight: 'bold' }}>PAGO COMPLETO - Tu lugar está 100% confirmado</p>
                 </div>
             )}
             <p style={{ textAlign: 'center', marginTop: '2rem', color: '#999', fontSize: '0.9rem' }}>

@@ -357,7 +357,7 @@ export default function ReservationLookup() {
                                 padding: '1rem',
                                 borderRadius: '0 0 12px 12px'
                             }}>
-                                <p style={{ margin: 0, color: '#e65100', fontSize: '0.85rem', textTransform: 'uppercase', fontWeight: '600' }}>⭐ Código de Abordaje ⭐</p>
+                                <p style={{ margin: 0, color: '#e65100', fontSize: '0.85rem', textTransform: 'uppercase', fontWeight: '600' }}>Código de Abordaje</p>
                                 <p style={{ margin: '0.25rem 0 0', fontSize: '2rem', fontWeight: '900', color: '#ef6c00', letterSpacing: '2px' }}>
                                     {reservation.boarding_access_code}
                                 </p>
@@ -444,7 +444,7 @@ export default function ReservationLookup() {
                     {reservation.ticket_orders && reservation.ticket_orders.length > 0 && (
                         <div style={{ marginBottom: '1.5rem' }}>
                             <h3 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.75rem', color: '#546e7a', textTransform: 'uppercase' }}>
-                                🎟️ Entradas a Centros Turísticos
+                                Entradas a Centros Turísticos
                             </h3>
                             <div style={{ background: '#ffffff', border: '1px solid #eceff1', borderRadius: '8px', overflow: 'hidden' }}>
                                 {reservation.ticket_orders.map((order, idx) => (
@@ -532,16 +532,13 @@ export default function ReservationLookup() {
 
                             {/* Deadline Notice */}
                             {reservation.status !== 'pagado_completo' && (
-                                <div style={{ marginTop: '1rem', background: '#fff3e0', border: '1px solid #ffe0b2', borderRadius: '6px', padding: '0.75rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
-                                    <span style={{ fontSize: '1.25rem' }}>⚠️</span>
-                                    <div>
-                                        <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', fontWeight: 'bold', color: '#e65100' }}>
-                                            FECHA LÍMITE DE PAGO: 23 DE MARZO 2026
-                                        </p>
-                                        <p style={{ margin: 0, fontSize: '0.8rem', color: '#ef6c00' }}>
-                                            Contacta al administrador para liquidar tu viaje antes de esta fecha.
-                                        </p>
-                                    </div>
+                                <div style={{ marginTop: '1rem', background: '#fff3e0', border: '1px solid #ffe0b2', borderRadius: '6px', padding: '0.75rem' }}>
+                                    <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', fontWeight: 'bold', color: '#e65100' }}>
+                                        FECHA LÍMITE DE PAGO: 23 DE MARZO 2026
+                                    </p>
+                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#ef6c00' }}>
+                                        Contacta al administrador para liquidar tu viaje antes de esta fecha.
+                                    </p>
                                 </div>
                             )}
                         </div>
@@ -587,14 +584,17 @@ export default function ReservationLookup() {
                         Descargar Ticket Oficial
                     </button>
                 </div>
-            )}
+            )
+            }
 
-            {reservation && (
-                <div style={{ position: 'absolute', top: -9999, left: -9999, width: '800px' }}>
-                    <TicketTemplate reservation={reservation} />
-                </div>
-            )}
-        </section>
+            {
+                reservation && (
+                    <div style={{ position: 'absolute', top: -9999, left: -9999, width: '800px' }}>
+                        <TicketTemplate reservation={reservation} />
+                    </div>
+                )
+            }
+        </section >
     )
 }
 
@@ -698,8 +698,9 @@ function TicketTemplate({ reservation }: { reservation: ReservationInfo }) {
             {/* Payment Deadline Notice - Only show if not fully paid */}
             {reservation.status !== 'pagado_completo' && (
                 <div style={{ marginTop: '1.5rem', background: '#fff3e0', border: '2px solid #ff9800', borderRadius: '8px', padding: '1rem', textAlign: 'center' }}>
-                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#e65100', fontWeight: '700', textTransform: 'uppercase' }}>⚠️ FECHA LÍMITE DE PAGO ⚠️</p>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#e65100', fontWeight: '700', textTransform: 'uppercase' }}>FECHAS LÍMITE DE PAGO</p>
                     <p style={{ margin: '0.5rem 0 0 0', fontSize: '1.1rem', fontWeight: '800', color: '#ef6c00' }}>
+                        <span style={{ fontSize: '0.7rem', fontWeight: 'normal', display: 'block', textTransform: 'uppercase' }}>Fecha Límite</span>
                         23 de Marzo, 2026
                     </p>
                     <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8rem', color: '#7e3c00', lineHeight: '1.4' }}>

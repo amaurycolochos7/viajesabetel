@@ -65,3 +65,4 @@ LIMIT 20;
 -- - Este script es idempotente (se puede ejecutar múltiples veces sin problemas)
 -- - Las políticas RLS permiten acceso público necesario para el flujo de compra
 -- - En producción, considera restringir las políticas para mayor seguridad
+x

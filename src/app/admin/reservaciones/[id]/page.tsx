@@ -792,21 +792,27 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                                 Confirmar Pago Completo
                             </a>
-                            {/* Botón seguimiento de pago */}
+                            {/* Botón recordatorio - Adelanto 50% */}
                             <a
                                 href={(() => {
                                     const phone = reservation.responsible_phone.replace(/\D/g, '')
                                     const fullPhone = phone.startsWith('52') ? phone : `52${phone}`
-                                    const paymentType = reservation.amount_paid >= reservation.deposit_required ? 'pago restante' : 'anticipo del 50%'
+                                    const depositAmount = reservation.deposit_required
                                     const message = `Hola ${reservation.responsible_name},
 
-Vimos que iniciaste tu reservación ${reservation.reservation_code} pero aún no hemos recibido confirmación de tu pago.
+Te escribimos para recordarte sobre tu reservación *${reservation.reservation_code}* para el viaje a Betel.
 
-¿En qué te podemos apoyar para completar tu ${paymentType}?
+📅 *FECHA LÍMITE ADELANTO: 25 DE ENERO 2026*
 
-Monto pendiente: $${remainingBalance.toLocaleString('es-MX')}
+Para asegurar tu lugar, necesitas realizar el pago del *50% de adelanto* ($${depositAmount.toLocaleString('es-MX')}) antes de esta fecha.
 
-Estamos aquí para ayudarte a completar tu reservación.`
+💳 Puedes pagar por:
+• Transferencia bancaria (sin comisión)
+• Mercado Pago con tarjeta (+5% comisión)
+
+¿Tienes alguna duda o necesitas ayuda para completar tu pago?
+
+¡Gracias!`
                                     return `https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`
                                 })()}
                                 target="_blank"
@@ -815,19 +821,66 @@ Estamos aquí para ayudarte a completar tu reservación.`
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    gap: '0.75rem',
-                                    padding: '1rem',
+                                    gap: '0.5rem',
+                                    padding: '0.85rem 1rem',
+                                    background: '#fff7ed',
+                                    color: '#c2410c',
+                                    borderRadius: '8px',
+                                    textDecoration: 'none',
+                                    fontWeight: '700',
+                                    border: '1px solid #fed7aa',
+                                    transition: 'background 0.2s',
+                                    fontSize: '0.85rem'
+                                }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                Recordar Adelanto 50%
+                            </a>
+
+                            {/* Botón recordatorio - Liquidar viaje */}
+                            <a
+                                href={(() => {
+                                    const phone = reservation.responsible_phone.replace(/\D/g, '')
+                                    const fullPhone = phone.startsWith('52') ? phone : `52${phone}`
+                                    const message = `Hola ${reservation.responsible_name},
+
+Te escribimos para recordarte sobre tu reservación *${reservation.reservation_code}* para el viaje a Betel.
+
+📅 *FECHA LÍMITE PARA LIQUIDAR: 23 DE MARZO 2026*
+
+Tu saldo pendiente es de *$${remainingBalance.toLocaleString('es-MX')}*.
+
+Para no perder tu lugar, es importante liquidar el viaje completo antes de esta fecha.
+
+💳 Puedes pagar por:
+• Transferencia bancaria (sin comisión)
+• Mercado Pago con tarjeta (+5% comisión)
+
+¿Necesitas ayuda para completar tu pago?
+
+¡Gracias!`
+                                    return `https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`
+                                })()}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem',
+                                    padding: '0.85rem 1rem',
                                     background: '#fef3c7',
                                     color: '#b45309',
                                     borderRadius: '8px',
                                     textDecoration: 'none',
                                     fontWeight: '700',
                                     border: '1px solid #fcd34d',
-                                    transition: 'background 0.2s'
+                                    transition: 'background 0.2s',
+                                    fontSize: '0.85rem'
                                 }}
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                                Seguimiento de Pago
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                                Recordar Liquidar Viaje
                             </a>
                         </div>
                     </div>
