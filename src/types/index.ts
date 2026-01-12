@@ -32,6 +32,8 @@ export interface Reservation {
     status: 'pendiente' | 'anticipo_pagado' | 'pagado_completo' | 'cancelado'
     seat_order?: number
     pay_by_date?: string
+    payment_method?: 'card' | 'transfer' | null
+    mp_payment_status?: 'pending' | 'approved' | 'rejected' | null
     created_at: string
 }
 

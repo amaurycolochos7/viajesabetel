@@ -190,6 +190,11 @@ export default function ReservarPage() {
         setError('')
 
         try {
+            // Guardar método de pago elegido en la base de datos
+            await supabase.from('reservations')
+                .update({ payment_method: 'card', mp_payment_status: 'pending' })
+                .eq('reservation_code', result.reservation_code)
+
             // Apply 5% commission for MP
             const commissionMultiplier = 1.05
             const adjustedTotal = result.total_amount * commissionMultiplier
@@ -232,7 +237,14 @@ export default function ReservarPage() {
         }
     }
 
-    const handlePayWithTransfer = () => {
+    const handlePayWithTransfer = async () => {
+        if (!result) return
+
+        // Guardar método de pago elegido en la base de datos
+        await supabase.from('reservations')
+            .update({ payment_method: 'transfer' })
+            .eq('reservation_code', result.reservation_code)
+
         setPaymentMethod('transfer')
         generateTicketImage()
         setStep('confirmation')

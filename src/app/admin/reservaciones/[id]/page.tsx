@@ -440,6 +440,41 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                                     {reservation.boarding_access_code || '—'}
                                 </div>
                             </div>
+                            <div>
+                                <div style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Método de Pago Elegido</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    {reservation.payment_method ? (
+                                        <span style={{
+                                            padding: '0.35rem 0.75rem',
+                                            borderRadius: '8px',
+                                            fontWeight: '700',
+                                            fontSize: '0.9rem',
+                                            background: reservation.payment_method === 'card' ? '#e0f2fe' : '#fef3c7',
+                                            color: reservation.payment_method === 'card' ? '#0369a1' : '#b45309',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.4rem'
+                                        }}>
+                                            {reservation.payment_method === 'card' ? '💳 MercadoPago' : '🏦 Transferencia'}
+                                        </span>
+                                    ) : (
+                                        <span style={{ fontWeight: '600', fontSize: '1.1rem', color: '#94a3b8' }}>Sin elegir</span>
+                                    )}
+                                    {reservation.payment_method === 'card' && reservation.mp_payment_status && (
+                                        <span style={{
+                                            padding: '0.25rem 0.5rem',
+                                            borderRadius: '6px',
+                                            fontWeight: '700',
+                                            fontSize: '0.7rem',
+                                            textTransform: 'uppercase',
+                                            background: reservation.mp_payment_status === 'approved' ? '#dcfce7' : reservation.mp_payment_status === 'rejected' ? '#fee2e2' : '#fff7ed',
+                                            color: reservation.mp_payment_status === 'approved' ? '#166534' : reservation.mp_payment_status === 'rejected' ? '#b91c1c' : '#c2410c'
+                                        }}>
+                                            {reservation.mp_payment_status === 'approved' ? 'Pagado' : reservation.mp_payment_status === 'rejected' ? 'Rechazado' : 'Pendiente MP'}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -756,6 +791,43 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
                                 Confirmar Pago Completo
+                            </a>
+                            {/* Botón seguimiento de pago */}
+                            <a
+                                href={(() => {
+                                    const phone = reservation.responsible_phone.replace(/\D/g, '')
+                                    const fullPhone = phone.startsWith('52') ? phone : `52${phone}`
+                                    const paymentType = reservation.amount_paid >= reservation.deposit_required ? 'pago restante' : 'anticipo del 50%'
+                                    const message = `Hola ${reservation.responsible_name},
+
+Vimos que iniciaste tu reservación ${reservation.reservation_code} pero aún no hemos recibido confirmación de tu pago.
+
+¿En qué te podemos apoyar para completar tu ${paymentType}?
+
+Monto pendiente: $${remainingBalance.toLocaleString('es-MX')}
+
+Estamos aquí para ayudarte a completar tu reservación.`
+                                    return `https://wa.me/${fullPhone}?text=${encodeURIComponent(message)}`
+                                })()}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.75rem',
+                                    padding: '1rem',
+                                    background: '#fef3c7',
+                                    color: '#b45309',
+                                    borderRadius: '8px',
+                                    textDecoration: 'none',
+                                    fontWeight: '700',
+                                    border: '1px solid #fcd34d',
+                                    transition: 'background 0.2s'
+                                }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                                Seguimiento de Pago
                             </a>
                         </div>
                     </div>

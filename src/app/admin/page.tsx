@@ -170,24 +170,36 @@ export default function AdminDashboard() {
                         gap: '0.75rem',
                         marginBottom: '1.5rem'
                     }}>
-                        <div style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                        <Link
+                            href="/admin/reservaciones"
+                            style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
+                        >
                             <div style={{ fontSize: '2rem', fontWeight: '800', color: '#2c3e50', lineHeight: 1 }}>{stats.totalReservations}</div>
                             <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600', marginTop: '0.25rem' }}>RESERVACIONES</div>
-                        </div>
-                        <div style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                        </Link>
+                        <Link
+                            href="/admin/reservaciones"
+                            style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
+                        >
                             <div style={{ fontSize: '2rem', fontWeight: '800', color: '#2c3e50', lineHeight: 1 }}>{stats.totalSeats}</div>
                             <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600', marginTop: '0.25rem' }}>LUGARES TOTALES</div>
-                        </div>
-                        <div style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                        </Link>
+                        <Link
+                            href="/admin/reservaciones?filter=pagado_completo"
+                            style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
+                        >
                             <div style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)', fontWeight: '800', color: '#2e7d32', lineHeight: 1, wordBreak: 'break-all' }}>${stats.totalPaid.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                             <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600', marginTop: '0.25rem' }}>PAGADO</div>
-                        </div>
-                        <div style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                        </Link>
+                        <Link
+                            href="/admin/reservaciones?filter=pendiente"
+                            style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
+                        >
                             <div style={{ fontSize: '2rem', fontWeight: '800', color: stats.pendingDeposits > 0 ? '#f59e0b' : '#2c3e50', lineHeight: 1 }}>
                                 {stats.pendingDeposits}
                             </div>
                             <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600', marginTop: '0.25rem' }}>ANTICIPOS PEND.</div>
-                        </div>
+                        </Link>
                     </div>
                 )}
 

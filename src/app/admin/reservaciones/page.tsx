@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Reservation } from '@/types'
@@ -10,6 +10,7 @@ type FilterStatus = 'all' | 'pendiente' | 'anticipo_pagado' | 'pagado_completo' 
 
 export default function ReservacionesPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const [reservations, setReservations] = useState<Reservation[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [filter, setFilter] = useState<FilterStatus>('all')
@@ -17,8 +18,13 @@ export default function ReservacionesPage() {
     const [searchCode, setSearchCode] = useState('')
 
     useEffect(() => {
+        // Leer filtro de URL si existe
+        const urlFilter = searchParams.get('filter') as FilterStatus | null
+        if (urlFilter && ['pendiente', 'anticipo_pagado', 'pagado_completo', 'cancelado'].includes(urlFilter)) {
+            setFilter(urlFilter)
+        }
         checkAuthAndLoadData()
-    }, [])
+    }, [searchParams])
 
     const checkAuthAndLoadData = async () => {
         const { data: { session } } = await supabase.auth.getSession()
@@ -233,8 +239,23 @@ export default function ReservacionesPage() {
                                             <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1e293b' }}>
                                                 {r.responsible_name}
                                             </div>
-                                            <div style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '2px' }}>
+                                            <div style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                                 {r.reservation_code}
+                                                {r.payment_method && (
+                                                    <span style={{
+                                                        fontSize: '0.75rem',
+                                                        padding: '2px 6px',
+                                                        borderRadius: '4px',
+                                                        fontWeight: '600',
+                                                        background: r.payment_method === 'card' ? '#e0f2fe' : '#fef3c7',
+                                                        color: r.payment_method === 'card' ? '#0369a1' : '#b45309',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '3px'
+                                                    }}>
+                                                        {r.payment_method === 'card' ? '💳 MP' : '🏦 Trans'}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                         <span style={{
