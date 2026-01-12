@@ -14,7 +14,7 @@ interface TourGroup {
     max_members: number
     notes: string | null
     created_at: string
-    bethel_code?: string
+    betel_code?: string
     captain_id?: string
     captain?: {
         first_name: string
@@ -50,7 +50,7 @@ export default function TourGroupsPage() {
 
     const [newGroupName, setNewGroupName] = useState('')
     const [newGroupDatetime, setNewGroupDatetime] = useState('')
-    const [newGroupBethelCode, setNewGroupBethelCode] = useState('')
+    const [newGroupBetelCode, setNewGroupBetelCode] = useState('')
     const [isCreating, setIsCreating] = useState(false)
 
     const [selectedGroup, setSelectedGroup] = useState<TourGroup | null>(null)
@@ -194,14 +194,14 @@ export default function TourGroupsPage() {
                 .insert({
                     group_name: newGroupName,
                     tour_datetime: formatForDB(newGroupDatetime),
-                    bethel_code: newGroupBethelCode || null,
+                    betel_code: newGroupBetelCode || null,
                 })
 
             if (error) throw error
 
             setNewGroupName('')
             setNewGroupDatetime('')
-            setNewGroupBethelCode('')
+            setNewGroupBetelCode('')
             await loadData()
         } catch (err) {
             console.error(err)
@@ -322,22 +322,22 @@ export default function TourGroupsPage() {
         }
     }
 
-    const handleUpdateBethelCode = async (code: string) => {
+    const handleUpdateBetelCode = async (code: string) => {
         if (!selectedGroup) return
 
         try {
             const { error } = await supabase
                 .from('tour_groups')
-                .update({ bethel_code: code || null })
+                .update({ betel_code: code || null })
                 .eq('id', selectedGroup.id)
 
             if (error) throw error
 
-            setSelectedGroup({ ...selectedGroup, bethel_code: code })
+            setSelectedGroup({ ...selectedGroup, betel_code: code })
             await loadData()
         } catch (err) {
             console.error(err)
-            alert('Error al actualizar código Bethel')
+            alert('Error al actualizar código Betel')
         }
     }
 
@@ -428,10 +428,10 @@ export default function TourGroupsPage() {
 
         let currentY = startY + 8
 
-        // Bethel Code
-        if (selectedGroup.bethel_code) {
+        // Betel Code
+        if (selectedGroup.betel_code) {
             doc.setFont('helvetica', 'bold')
-            doc.text(`Código Bethel: ${selectedGroup.bethel_code}`, 14, currentY)
+            doc.text(`Código Betel: ${selectedGroup.betel_code}`, 14, currentY)
             doc.setFont('helvetica', 'normal') // reset
             currentY += 8
         }
@@ -630,9 +630,9 @@ export default function TourGroupsPage() {
                                 <input
                                     type="text"
                                     style={{ width: '100%', padding: '0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.95rem', boxSizing: 'border-box' }}
-                                    placeholder="Código Bethel (Opcional)"
-                                    value={newGroupBethelCode}
-                                    onChange={(e) => setNewGroupBethelCode(e.target.value)}
+                                    placeholder="Código Betel (Opcional)"
+                                    value={newGroupBetelCode}
+                                    onChange={(e) => setNewGroupBetelCode(e.target.value)}
                                 />
                             </div>
                             <button
@@ -739,12 +739,12 @@ export default function TourGroupsPage() {
                                     </div>
 
                                     <div style={{ marginBottom: '1.5rem' }}>
-                                        <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Código Bethel</label>
+                                        <label style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Código Betel</label>
                                         <input
                                             type="text"
                                             style={{ width: '100%', padding: '0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '1rem', color: '#334155' }}
-                                            value={selectedGroup.bethel_code || ''}
-                                            onChange={(e) => handleUpdateBethelCode(e.target.value)}
+                                            value={selectedGroup.betel_code || ''}
+                                            onChange={(e) => handleUpdateBetelCode(e.target.value)}
                                             placeholder="Ingresa código..."
                                         />
                                     </div>

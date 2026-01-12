@@ -2,9 +2,9 @@
 -- UPDATE GROUPS SCHEMA - RUN IN SUPABASE
 -- ================================================
 
--- Add columns for Bethel Reservation Code and Captain ID
+-- Add columns for Betel Reservation Code and Captain ID
 ALTER TABLE tour_groups 
-ADD COLUMN IF NOT EXISTS bethel_code TEXT,
+ADD COLUMN IF NOT EXISTS betel_code TEXT,
 ADD COLUMN IF NOT EXISTS captain_id UUID REFERENCES reservation_passengers(id);
 
 -- Optional: Create index for captain lookup if needed (though groups table is small)
