@@ -132,6 +132,13 @@ export default function ReservarPage() {
     }
 
     const handleCreateReservation = async () => {
+        // Si ya existe una reservación, simplemente avanzar al paso de pago
+        // Esto evita crear duplicados cuando el usuario navega atrás y adelante
+        if (result) {
+            setStep('payment')
+            return
+        }
+
         setIsLoading(true)
         setError('')
 
@@ -277,7 +284,7 @@ export default function ReservarPage() {
                     <p style={{ color: '#666' }}>7-9 de Abril 2026</p>
                 </div>
 
-                {step !== 'seats' && (step !== 'confirmation' || paymentMethod === 'transfer') && (
+                {step !== 'seats' && (step !== 'confirmation' || paymentMethod === 'transfer') && !(step === 'payment' && result) && (
                     <button
                         onClick={() => {
                             if (step === 'confirmation') {
