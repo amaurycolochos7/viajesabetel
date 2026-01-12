@@ -644,18 +644,14 @@ export default function ReservarPage() {
                     <div className="fade-in">
                         <h2 style={{ fontSize: '1.5rem', marginBottom: '1.5rem', fontWeight: 'bold', color: '#1a1a1a' }}>Método de pago</h2>
 
-                        <div style={{ background: '#fff', border: '1px solid #e0e0e0', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                <div>
-                                    <h3 style={{ marginBottom: '0.5rem', fontSize: '0.9rem', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Reservación</h3>
-                                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)', letterSpacing: '1px', fontFamily: 'monospace' }}>
-                                        {result.reservation_code}
-                                    </div>
-                                </div>
-                                <div style={{ textAlign: 'right' }}>
-                                    <div style={{ fontSize: '0.9rem', color: '#666' }}>Total</div>
-                                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#333' }}>${formatMoney(totalAmount)}</div>
-                                </div>
+                        <div style={{ background: 'linear-gradient(135deg, #f0f7ff 0%, #fff 100%)', border: '2px solid var(--primary)', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem', textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.7rem', color: '#666', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.25rem' }}>Tu código de reservación</div>
+                            <div style={{ fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--primary)', fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: '0.75rem' }}>
+                                {result.reservation_code}
+                            </div>
+                            <div style={{ borderTop: '1px solid #e0e0e0', paddingTop: '0.75rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '0.8rem', color: '#666' }}>Total a pagar:</span>
+                                <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>${formatMoney(totalAmount)}</span>
                             </div>
                         </div>
 
