@@ -149,70 +149,7 @@ export default function ExtraActivities() {
                     </div>
                 </div>
 
-                {/* BLUMIA */}
-                <div className="activity-card" style={{
-                    background: 'white',
-                    borderRadius: '20px',
-                    overflow: 'hidden',
-                    boxShadow: '0 10px 30px -5px rgba(0,0,0,0.1)',
-                    border: '1px solid #f0f0f0'
-                }}>
-                    <div style={{ position: 'relative', height: '220px', width: '100%' }}>
-                        <Image
-                            src="/images/blumia-new.png"
-                            alt="Blumia Experiencia Inmersiva"
-                            fill
-                            quality={100}
-                            sizes="(max-width: 768px) 100vw, 600px"
-                            style={{ objectFit: 'cover' }}
-                        />
-                    </div>
 
-                    <div style={{ padding: '1.5rem' }}>
-                        <h3 style={{
-                            margin: '0 0 0.5rem',
-                            fontSize: '1.5rem',
-                            fontWeight: '800',
-                            color: '#00bcd4', // Cyan neón para Blumia
-                            fontFamily: 'var(--font-noto), sans-serif'
-                        }}>
-                            ¿Qué es Blumia?
-                        </h3>
-
-                        <div style={{ marginBottom: '1.25rem', fontSize: '0.9rem', color: '#546e7a', lineHeight: '1.5' }}>
-                            <p style={{ marginBottom: '0.5rem' }}><strong>Un viaje inmersivo:</strong> Exploración submarina con criaturas míticas.</p>
-                            <p style={{ marginBottom: '0.5rem' }}><strong>Arte y tecnología:</strong> Instalaciones artísticas interactivas.</p>
-                            <p style={{ margin: 0 }}><strong>Experiencia única:</strong> Recibe un amuleto personalizado.</p>
-                        </div>
-
-                        <div style={{ background: '#e0f7fa', padding: '1rem', borderRadius: '12px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
-                                <span style={{ color: '#006064', fontWeight: '600' }}>Adultos</span>
-                                <span style={{ color: '#0097a7', fontWeight: '700', fontSize: '1.1rem' }}>$159.00</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ color: '#006064', fontWeight: '600' }}>Niños</span>
-                                <span style={{ color: '#0097a7', fontWeight: '700', fontSize: '1.1rem' }}>$89.00</span>
-                            </div>
-                        </div>
-
-                        <Link href="/comprar-entradas?activity=blumia" style={{
-                            display: 'block',
-                            marginTop: '1.25rem',
-                            textAlign: 'center',
-                            background: '#00bcd4',
-                            color: 'white',
-                            padding: '0.75rem',
-                            borderRadius: '12px',
-                            fontWeight: '600',
-                            textDecoration: 'none',
-                            transition: 'background 0.2s',
-                            boxShadow: '0 4px 6px rgba(0, 188, 212, 0.2)'
-                        }}>
-                            Comprar Entradas
-                        </Link>
-                    </div>
-                </div>
 
             </div>
         </section>
