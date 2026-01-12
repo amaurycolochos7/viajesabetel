@@ -1030,7 +1030,7 @@ function ReservationTicket({ result, passengers, responsibleName, responsibleLas
                                 <td style={{ padding: '0.5rem', color: '#666' }}>{i + 1}</td>
                                 <td style={{ padding: '0.5rem', fontWeight: '500' }}>{p.first_name} {p.last_name}</td>
                                 <td style={{ padding: '0.5rem', fontSize: '0.9rem', color: '#666' }}>
-                                    {p.age !== undefined ? 'Niño' : 'Adulto'}
+                                    {p.is_infant ? 'Bebé' : p.passenger_type === 'child' ? 'Niño' : 'Adulto'}
                                 </td>
                             </tr>
                         ))}
