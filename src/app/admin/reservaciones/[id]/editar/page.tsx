@@ -26,6 +26,7 @@ interface ReservationEdit {
     total_amount: number
     amount_paid: number
     status: string
+    is_host?: boolean
 }
 
 const PRICE_PER_SEAT = 1800
@@ -194,7 +195,8 @@ export default function EditarReservacionPage() {
                     seats_total: active.length,
                     seats_payable: payable,
                     total_amount: total,
-                    deposit_required: Math.ceil(total * 0.5)
+                    deposit_required: Math.ceil(total * 0.5),
+                    is_host: reservation.is_host
                 })
                 .eq('id', reservation.id)
 
@@ -276,6 +278,23 @@ export default function EditarReservacionPage() {
                                 onChange={e => updateReservation('responsible_congregation', e.target.value)}
                                 style={{ width: '100%', padding: '0.85rem', border: '1px solid #e2e8f0', borderRadius: '10px', fontSize: '1rem', background: '#f8fafc' }}
                             />
+                        </div>
+
+                        <div style={{ padding: '1rem', background: '#f0f9ff', borderRadius: '10px', border: '1px solid #bae6fd' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={reservation?.is_host || false}
+                                    onChange={e => updateReservation('is_host', e.target.checked)}
+                                    style={{ width: '1.25rem', height: '1.25rem' }}
+                                />
+                                <div>
+                                    <div style={{ fontWeight: '700', color: '#0369a1' }}>Es Anfitrión (Staff)</div>
+                                    <div style={{ fontSize: '0.8rem', color: '#0c4a6e' }}>
+                                        Si se marca, el dinero de esta reservación <strong>NO contará</strong> en los reportes financieros.
+                                    </div>
+                                </div>
+                            </label>
                         </div>
                     </div>
                 </div>

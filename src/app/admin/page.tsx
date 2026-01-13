@@ -65,10 +65,14 @@ export default function AdminDashboard() {
 
         const totalReservations = reservationsData.length
         const totalSeats = reservationsData.reduce((sum, r) => sum + r.seats_total, 0)
-        const seatsPayable = reservationsData.reduce((sum, r) => sum + r.seats_payable, 0)
-        const totalAmount = reservationsData.reduce((sum, r) => sum + r.total_amount, 0)
-        const totalPaid = reservationsData.reduce((sum, r) => sum + r.amount_paid, 0)
-        const pendingDeposits = reservationsData.filter(r =>
+
+        // Filter out host reservations for financial stats
+        const payableReservations = reservationsData.filter(r => !r.is_host)
+
+        const seatsPayable = payableReservations.reduce((sum, r) => sum + r.seats_payable, 0)
+        const totalAmount = payableReservations.reduce((sum, r) => sum + r.total_amount, 0)
+        const totalPaid = payableReservations.reduce((sum, r) => sum + r.amount_paid, 0)
+        const pendingDeposits = payableReservations.filter(r =>
             r.status === 'pendiente' && r.amount_paid < r.deposit_required
         ).length
 
@@ -310,7 +314,9 @@ export default function AdminDashboard() {
                                         </div>
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <div style={{ fontWeight: '700', color: '#0f172a' }}>${r.total_amount.toLocaleString()}</div>
+                                        <div style={{ fontWeight: '700', color: r.is_host ? '#3b82f6' : '#0f172a' }}>
+                                            {r.is_host ? 'Anfitrión' : `$${r.total_amount.toLocaleString()}`}
+                                        </div>
                                         <span style={{
                                             display: 'inline-block',
                                             fontSize: '0.75rem',

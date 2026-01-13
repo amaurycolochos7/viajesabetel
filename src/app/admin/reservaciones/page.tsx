@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Reservation } from '@/types'
 
-type FilterStatus = 'all' | 'pendiente' | 'anticipo_pagado' | 'pagado_completo' | 'cancelado'
+type FilterStatus = 'all' | 'pendiente' | 'anticipo_pagado' | 'pagado_completo' | 'cancelado' | 'anfitrion'
 
 // Main export wraps content in Suspense
 export default function ReservacionesPage() {
@@ -33,7 +33,7 @@ function ReservacionesContent() {
     useEffect(() => {
         // Leer filtro de URL si existe
         const urlFilter = searchParams.get('filter') as FilterStatus | null
-        if (urlFilter && ['pendiente', 'anticipo_pagado', 'pagado_completo', 'cancelado'].includes(urlFilter)) {
+        if (urlFilter && ['pendiente', 'anticipo_pagado', 'pagado_completo', 'cancelado', 'anfitrion'].includes(urlFilter)) {
             setFilter(urlFilter)
         }
         checkAuthAndLoadData()
@@ -102,7 +102,12 @@ function ReservacionesContent() {
     }
 
     const filteredReservations = reservations.filter(r => {
-        const matchesFilter = filter === 'all' || r.status === filter
+        let matchesFilter = false
+
+        if (filter === 'all') matchesFilter = true
+        else if (filter === 'anfitrion') matchesFilter = !!r.is_host
+        else matchesFilter = r.status === filter && !r.is_host // Exclude hosts from standard status filters
+
         const matchesSearch = searchCode === '' ||
             r.reservation_code.toLowerCase().includes(searchCode.toLowerCase()) ||
             r.responsible_name.toLowerCase().includes(searchCode.toLowerCase()) ||
@@ -112,10 +117,11 @@ function ReservacionesContent() {
 
     const stats = {
         total: reservations.length,
-        pendientes: reservations.filter(r => r.status === 'pendiente').length,
-        conAnticipo: reservations.filter(r => r.status === 'anticipo_pagado').length,
-        pagadas: reservations.filter(r => r.status === 'pagado_completo').length,
-        canceladas: reservations.filter(r => r.status === 'cancelado').length,
+        pendientes: reservations.filter(r => r.status === 'pendiente' && !r.is_host).length,
+        conAnticipo: reservations.filter(r => r.status === 'anticipo_pagado' && !r.is_host).length,
+        pagadas: reservations.filter(r => r.status === 'pagado_completo' && !r.is_host).length,
+        canceladas: reservations.filter(r => r.status === 'cancelado' && !r.is_host).length,
+        anfitriones: reservations.filter(r => r.is_host).length,
     }
 
     if (isLoading) {
@@ -195,6 +201,7 @@ function ReservacionesContent() {
                     }}>
                         {[
                             { id: 'all', label: 'Todas', count: stats.total, color: '#334155' },
+                            { id: 'anfitrion', label: 'Anfitriones', count: stats.anfitriones, color: '#8b5cf6' },
                             { id: 'pendiente', label: 'Pendientes', count: stats.pendientes, color: '#f59e0b' },
                             { id: 'anticipo_pagado', label: 'Anticipo', count: stats.conAnticipo, color: '#3b82f6' },
                             { id: 'pagado_completo', label: 'Pagadas', count: stats.pagadas, color: '#22c55e' },
@@ -301,14 +308,14 @@ function ReservacionesContent() {
                                         </div>
                                         <div>
                                             <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase' }}>Pagado</div>
-                                            <div style={{ fontSize: '0.95rem', color: r.amount_paid > 0 ? '#10b981' : '#94a3b8', fontWeight: '700' }}>
-                                                ${r.amount_paid > 0 ? r.amount_paid.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+                                            <div style={{ fontSize: '0.95rem', color: r.is_host ? '#3b82f6' : (r.amount_paid > 0 ? '#10b981' : '#94a3b8'), fontWeight: '700' }}>
+                                                {r.is_host ? 'Anfitrión' : (r.amount_paid > 0 ? `$${r.amount_paid.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00')}
                                             </div>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
                                             <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase' }}>Total</div>
-                                            <div style={{ fontSize: '0.95rem', color: '#1e293b', fontWeight: '800' }}>
-                                                ${r.total_amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            <div style={{ fontSize: '0.95rem', color: r.is_host ? '#3b82f6' : '#1e293b', fontWeight: '800' }}>
+                                                {r.is_host ? 'Anfitrión' : `$${r.total_amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                                             </div>
                                         </div>
                                     </div>

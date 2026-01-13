@@ -34,6 +34,7 @@ export interface Reservation {
     pay_by_date?: string
     payment_method?: 'card' | 'transfer' | null
     mp_payment_status?: 'pending' | 'approved' | 'rejected' | null
+    is_host?: boolean
     created_at: string
 }
 

@@ -279,6 +279,25 @@ export default function ReservacionDetailPage() {
         }
     }
 
+    const toggleHostStatus = async () => {
+        if (!reservation) return
+
+        const newStatus = !reservation.is_host
+        try {
+            const { error } = await supabase
+                .from('reservations')
+                .update({ is_host: newStatus })
+                .eq('id', reservation.id)
+
+            if (error) throw error
+
+            setReservation({ ...reservation, is_host: newStatus })
+        } catch (err) {
+            console.error(err)
+            alert('Error al actualizar estatus de anfitrión')
+        }
+    }
+
     const getStatusLabel = (status: string) => {
         const labels: Record<string, string> = {
             pendiente: 'Pendiente',
@@ -420,6 +439,38 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                         {getStatusLabel(reservation.status)}
                     </span>
                 </div>
+                {/* Host Toggle Banner */}
+                <div style={{ maxWidth: '900px', margin: '0.5rem auto 0', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                        onClick={toggleHostStatus}
+                        style={{
+                            background: reservation.is_host ? '#0ea5e9' : 'transparent',
+                            color: reservation.is_host ? 'white' : '#64748b',
+                            border: reservation.is_host ? 'none' : '1px solid #cbd5e1',
+                            padding: '0.35rem 0.75rem',
+                            borderRadius: '20px',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        {reservation.is_host ? (
+                            <>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                Es Anfitrión (No suma ingresos)
+                            </>
+                        ) : (
+                            <>
+                                <div style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid #cbd5e1' }}></div>
+                                Marcar como Anfitrión
+                            </>
+                        )}
+                    </button>
+                </div>
             </header>
 
             <main style={{ maxWidth: '900px', margin: '0 auto', padding: '1.5rem 1rem' }}>
@@ -452,19 +503,19 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', textAlign: 'center' }}>
                             <div style={{ padding: '0.5rem', borderRadius: '8px', background: '#f8fafc' }}>
                                 <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#10b981' }}>
-                                    ${reservation.amount_paid.toLocaleString('es-MX')}
+                                    {reservation.is_host ? 'Anfitrión' : `$${reservation.amount_paid.toLocaleString('es-MX')}`}
                                 </div>
                                 <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase' }}>Pagado</div>
                             </div>
                             <div style={{ padding: '0.5rem', borderRadius: '8px', background: '#f8fafc' }}>
                                 <div style={{ fontSize: '1.2rem', fontWeight: '800', color: remainingBalance > 0 ? '#ef4444' : '#10b981' }}>
-                                    ${remainingBalance.toLocaleString('es-MX')}
+                                    {reservation.is_host ? '-' : `$${remainingBalance.toLocaleString('es-MX')}`}
                                 </div>
                                 <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase' }}>Pendiente</div>
                             </div>
                             <div style={{ padding: '0.5rem', borderRadius: '8px', background: '#f8fafc' }}>
                                 <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#1e293b' }}>
-                                    ${reservation.total_amount.toLocaleString('es-MX')}
+                                    {reservation.is_host ? 'Anfitrión' : `$${reservation.total_amount.toLocaleString('es-MX')}`}
                                 </div>
                                 <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase' }}>Total</div>
                             </div>
