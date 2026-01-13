@@ -159,7 +159,8 @@ export default function ReservationLookup() {
                 <p style={{ color: '#666', marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: '1.5' }}>
                     Si ya hiciste tu reservación, puedes verificar tus datos y estado de pago.
                 </p>
-                <div style={{ display: 'grid', gap: '1rem' }}>
+                <div style={{ display: 'grid', gap: '0.75rem' }}>
+                    {/* Botón principal - Verificar Reservación */}
                     <button
                         onClick={() => setMode('lookup')}
                         style={{
@@ -167,49 +168,49 @@ export default function ReservationLookup() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '0.75rem',
-                            padding: '1rem',
-                            background: '#3f51b5',
+                            padding: '1rem 1.25rem',
+                            background: 'linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%)',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '8px',
+                            borderRadius: '12px',
                             fontSize: '1rem',
-                            fontWeight: '500',
+                            fontWeight: '600',
                             cursor: 'pointer',
-                            boxShadow: '0 2px 4px rgba(63, 81, 181, 0.2)',
-                            transition: 'transform 0.1s active',
+                            boxShadow: '0 4px 12px rgba(63, 81, 181, 0.35)',
                         }}
                     >
                         <SearchIcon />
                         Verificar Mi Reservación
                     </button>
+
+                    {/* Botón secundario - Consultar Grupo */}
                     <Link
                         href="/mi-grupo"
                         style={{
                             display: 'flex',
-                            flexDirection: 'column',
                             alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.5rem',
-                            padding: '1rem',
-                            background: '#fff',
-                            color: '#2c3e50',
-                            border: '1px solid #cfd8dc',
-                            borderRadius: '8px',
+                            gap: '0.75rem',
+                            padding: '1rem 1.25rem',
+                            background: 'linear-gradient(135deg, #2e7d32 0%, #43a047 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '12px',
                             fontSize: '1rem',
-                            fontWeight: '500',
+                            fontWeight: '600',
                             textDecoration: 'none',
-                            transition: 'background 0.2s',
+                            boxShadow: '0 4px 12px rgba(46, 125, 50, 0.35)',
                         }}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <UsersIcon />
-                            <span>Consultar Mi Grupo de Tour</span>
+                        <UsersIcon />
+                        <div style={{ textAlign: 'left' }}>
+                            <div>Consultar Mi Grupo de Tour</div>
+                            <div style={{ fontSize: '0.7rem', fontWeight: '400', opacity: 0.9, marginTop: '2px' }}>
+                                Número de grupo, horario y lista de integrantes
+                            </div>
                         </div>
-                        <span style={{ fontSize: '0.75rem', color: '#78909c', textAlign: 'center', lineHeight: 1.4 }}>
-                            Ver número de grupo, horario de acceso a Betel y lista de integrantes
-                        </span>
                     </Link>
 
+                    {/* Botón terciario - Modificar Reservación */}
                     <Link
                         href="/modificar-reservacion"
                         style={{
@@ -217,53 +218,51 @@ export default function ReservationLookup() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '0.75rem',
-                            padding: '1rem',
-                            background: '#2c3e50',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontSize: '1rem',
-                            fontWeight: '500',
+                            padding: '0.9rem 1.25rem',
+                            background: 'white',
+                            color: '#37474f',
+                            border: '2px solid #b0bec5',
+                            borderRadius: '12px',
+                            fontSize: '0.95rem',
+                            fontWeight: '600',
                             textDecoration: 'none',
-                            boxShadow: '0 2px 4px rgba(44, 62, 80, 0.3)',
                         }}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
                         Modificar Mi Reservación
                     </Link>
 
+                    {/* Botón de términos */}
                     <Link
                         href="/terminos"
                         style={{
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '0.75rem',
-                            padding: '0.75rem',
+                            gap: '0.5rem',
+                            padding: '0.65rem',
                             background: 'transparent',
-                            color: '#666',
-                            border: '1px dashed #e0e0e0',
+                            color: '#78909c',
+                            border: 'none',
                             borderRadius: '8px',
-                            fontSize: '0.9rem',
+                            fontSize: '0.85rem',
                             fontWeight: '500',
                             textDecoration: 'none',
-                            marginTop: '0.5rem'
                         }}
                     >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                             <line x1="16" y1="13" x2="8" y2="13"></line>
                             <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
                         </svg>
-                        Términos y condiciones del Viaje
+                        Términos y condiciones
                     </Link>
                 </div>
-            </section>
+            </section >
         )
     }
 
