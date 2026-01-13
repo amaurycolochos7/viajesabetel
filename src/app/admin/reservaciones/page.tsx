@@ -6,12 +6,22 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Reservation } from '@/types'
 
-// Disable static prerendering for this page (uses useSearchParams)
-export const dynamic = 'force-dynamic'
-
 type FilterStatus = 'all' | 'pendiente' | 'anticipo_pagado' | 'pagado_completo' | 'cancelado'
 
+// Main export wraps content in Suspense
 export default function ReservacionesPage() {
+    return (
+        <Suspense fallback={
+            <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f6fa' }}>
+                <p>Cargando...</p>
+            </div>
+        }>
+            <ReservacionesContent />
+        </Suspense>
+    )
+}
+
+function ReservacionesContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [reservations, setReservations] = useState<Reservation[]>([])
