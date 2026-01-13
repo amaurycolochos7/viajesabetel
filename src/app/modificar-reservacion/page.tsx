@@ -45,6 +45,7 @@ export default function ModificarReservacionPage() {
     const [originalPassengerCount, setOriginalPassengerCount] = useState(0)
     const [isSaving, setIsSaving] = useState(false)
     const [saveSuccess, setSaveSuccess] = useState(false)
+    const [showTransferModal, setShowTransferModal] = useState(false)
 
     const isDeadlinePassed = new Date() > MODIFICATION_DEADLINE
 
@@ -246,14 +247,18 @@ export default function ModificarReservacionPage() {
         const { difference } = calculateNewTotal()
         if (difference <= 0) return
 
+        // Calculate commission (5%)
+        const commission = difference * 0.05
+        const totalToPay = difference + commission
+
         try {
             const res = await fetch('/api/reservations/preference', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     reservationId: reservation.id,
-                    amount: difference,
-                    description: `Pago adicional - ${reservation.reservation_code}`
+                    amount: totalToPay, // Send total with commission
+                    description: `Pago adicional (inc. comisión) - ${reservation.reservation_code}`
                 })
             })
             const data = await res.json()
@@ -552,31 +557,68 @@ export default function ModificarReservacionPage() {
                     </div>
 
                     {difference > 0 && (
-                        <button
-                            onClick={handlePayDifference}
-                            style={{
-                                width: '100%',
-                                padding: '0.9rem',
-                                background: '#009ee3',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '10px',
-                                fontWeight: '700',
-                                fontSize: '0.9rem',
-                                cursor: 'pointer',
-                                marginBottom: '0.75rem'
-                            }}
-                        >
-                            Pagar ${difference.toLocaleString()} con MercadoPago
-                        </button>
-                    )}
+                        <div style={{ display: 'grid', gap: '0.75rem' }}>
+                            <button
+                                onClick={handlePayDifference}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.9rem',
+                                    background: '#009ee3',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '10px',
+                                    fontWeight: '700',
+                                    fontSize: '0.9rem',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem'
+                                }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                                </svg>
+                                Pagar ${difference.toLocaleString()} (+ 5% comisión) con MercadoPago
+                            </button>
 
-                    {needsRefund() && (
+                            <button
+                                onClick={() => setShowTransferModal(true)}
+                                style={{
+                                    width: '100%',
+                                    padding: '0.9rem',
+                                    background: '#ffffff',
+                                    color: '#2c3e50',
+                                    border: '2px solid #e2e8f0',
+                                    borderRadius: '10px',
+                                    fontWeight: '700',
+                                    fontSize: '0.9rem',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem'
+                                }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                                Pagar con Transferencia Bancaria
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {needsRefund() && (
+                    <div style={{ background: 'white', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
                         <a
                             href={`https://wa.me/529618720544?text=${encodeURIComponent(`Solicito devolucion - ${reservation?.reservation_code}`)}`}
                             target="_blank"
                             style={{
-                                display: 'block',
                                 width: '100%',
                                 padding: '0.9rem',
                                 background: '#128C7E',
@@ -586,13 +628,20 @@ export default function ModificarReservacionPage() {
                                 fontWeight: '700',
                                 fontSize: '0.9rem',
                                 textAlign: 'center',
-                                textDecoration: 'none'
+                                textDecoration: 'none',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem'
                             }}
                         >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                            </svg>
                             Solicitar Devolucion por WhatsApp
                         </a>
-                    )}
-                </div>
+                    </div>
+                )}
 
                 {/* Save Button */}
                 <button
@@ -608,12 +657,139 @@ export default function ModificarReservacionPage() {
                         fontSize: '1rem',
                         fontWeight: '700',
                         cursor: isSaving ? 'not-allowed' : 'pointer',
-                        opacity: isSaving ? 0.7 : 1
+                        opacity: isSaving ? 0.7 : 1,
+                        boxShadow: '0 4px 6px -1px rgba(44, 62, 80, 0.2)'
                     }}
                 >
                     {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
             </main>
+
+            {/* Modal de Transferencia */}
+            {showTransferModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '1rem',
+                    zIndex: 50
+                }}>
+                    <div style={{
+                        background: 'white',
+                        borderRadius: '16px',
+                        padding: '1.5rem',
+                        width: '100%',
+                        maxWidth: '360px',
+                        position: 'relative',
+                        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+                    }}>
+                        <button
+                            onClick={() => setShowTransferModal(false)}
+                            style={{
+                                position: 'absolute',
+                                top: '1rem',
+                                right: '1rem',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                color: '#94a3b8'
+                            }}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+
+                        <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                            <div style={{ background: '#f1f5f9', width: '48px', height: '48px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem auto' }}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2c3e50" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                                </svg>
+                            </div>
+                            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1e293b', margin: 0 }}>Datos de Transferencia</h3>
+                        </div>
+
+                        <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '12px', marginBottom: '1.5rem' }}>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.25rem' }}>Banco Destino</div>
+                                <div style={{ fontSize: '1rem', fontWeight: '600', color: '#334155' }}>Mercado Pago</div>
+                            </div>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.25rem' }}>Beneficiario</div>
+                                <div style={{ fontSize: '1rem', fontWeight: '600', color: '#334155' }}>Gady Hernández</div>
+                            </div>
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.25rem' }}>CLABE Interbancaria</div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#1e293b', fontFamily: 'monospace' }}>
+                                        722969010994673004
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            navigator.clipboard.writeText('722969010994673004')
+                                            alert('CLABE copiada al portapapeles')
+                                        }}
+                                        style={{
+                                            background: '#e2e8f0',
+                                            border: 'none',
+                                            padding: '0.4rem',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            color: '#475569'
+                                        }}
+                                        title="Copiar CLABE"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', textAlign: 'center', lineHeight: '1.5' }}>
+                            <p>Realiza la transferencia por el monto exacto de: <strong>${difference.toLocaleString()}</strong></p>
+                            <p style={{ marginTop: '0.5rem' }}>
+                                Una vez realizada, envía tu comprobante por WhatsApp para validar tu pago.
+                            </p>
+                        </div>
+
+                        <a
+                            href={`https://wa.me/529618720544?text=${encodeURIComponent(`Hola, envío comprobante de pago por diferencia de reservación: ${reservation?.reservation_code}`)}`}
+                            target="_blank"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.5rem',
+                                width: '100%',
+                                marginTop: '1.5rem',
+                                padding: '1rem',
+                                background: '#128C7E',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '12px',
+                                textDecoration: 'none',
+                                fontWeight: '600'
+                            }}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                            </svg>
+                            Enviar Comprobante
+                        </a>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
