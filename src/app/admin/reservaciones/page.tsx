@@ -1,10 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Reservation } from '@/types'
+
+// Disable static prerendering for this page (uses useSearchParams)
+export const dynamic = 'force-dynamic'
 
 type FilterStatus = 'all' | 'pendiente' | 'anticipo_pagado' | 'pagado_completo' | 'cancelado'
 
