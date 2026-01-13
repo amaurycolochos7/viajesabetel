@@ -29,7 +29,6 @@ export default function HeroCarousel() {
                         objectFit: 'cover',
                         transition: 'opacity 0.7s ease-in-out',
                     }}
-                    quality={100}
                     sizes="100vw"
                     priority={index === 0}
                 />

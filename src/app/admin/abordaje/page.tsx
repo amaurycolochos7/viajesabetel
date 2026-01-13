@@ -407,8 +407,8 @@ export default function AbordajePage() {
                                                         ) : (
                                                             <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>Sin asiento</span>
                                                         )}
-                                                        <span style={{ background: '#f8fafc', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem' }}>
-                                                            {p.is_free_under6 ? 'Menor' : p.age ? `${p.age} años` : 'Adulto'}
+                                                        <span style={{ background: p.is_free_under6 ? '#dcfce7' : '#f8fafc', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', color: p.is_free_under6 ? '#166534' : '#64748b' }}>
+                                                            {p.is_free_under6 ? 'Menor (Gratis)' : (p.age !== undefined && p.age !== null ? `${p.age} años` : '—')}
                                                         </span>
                                                     </div>
                                                 </div>

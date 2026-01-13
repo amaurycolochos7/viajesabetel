@@ -30,6 +30,11 @@ export default function ReservacionDetailPage() {
     const [paymentNote, setPaymentNote] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
 
+    // Seat assignment modal
+    const [showSeatModal, setShowSeatModal] = useState(false)
+    const [selectedPassengerId, setSelectedPassengerId] = useState<string | null>(null)
+    const [occupiedSeats, setOccupiedSeats] = useState<Map<string, string>>(new Map())
+
     useEffect(() => {
         checkAuthAndLoadData()
     }, [params.id])
@@ -100,7 +105,67 @@ export default function ReservacionDetailPage() {
             setTicketOrders(ticketsData)
         }
 
+        // Load all occupied seats globally
+        const { data: allSeats } = await supabase
+            .from('reservation_passengers')
+            .select('seat_number, first_name, last_name')
+
+        const seatMap = new Map<string, string>()
+        allSeats?.forEach(p => {
+            if (p.seat_number && p.seat_number.trim() !== '') {
+                seatMap.set(p.seat_number.trim(), `${p.first_name} ${p.last_name}`)
+            }
+        })
+        setOccupiedSeats(seatMap)
+
         setIsLoading(false)
+    }
+
+    const openSeatModal = (passengerId: string) => {
+        setSelectedPassengerId(passengerId)
+        setShowSeatModal(true)
+    }
+
+    const assignSeat = async (seatNumber: number) => {
+        if (!selectedPassengerId) return
+
+        const seatStr = seatNumber.toString()
+
+        // Check if seat is already taken by someone else
+        const currentPassenger = passengers.find(p => p.id === selectedPassengerId)
+        if (occupiedSeats.has(seatStr) && currentPassenger?.seat_number !== seatStr) {
+            alert(`El asiento ${seatNumber} ya está ocupado por ${occupiedSeats.get(seatStr)}`)
+            return
+        }
+
+        try {
+            const { error } = await supabase
+                .from('reservation_passengers')
+                .update({ seat_number: seatStr })
+                .eq('id', selectedPassengerId)
+
+            if (error) throw error
+
+            // Update local state
+            setPassengers(prev => prev.map(p =>
+                p.id === selectedPassengerId ? { ...p, seat_number: seatStr } : p
+            ))
+
+            // Update occupied seats map
+            const newMap = new Map(occupiedSeats)
+            // Remove old seat if any
+            if (currentPassenger?.seat_number) {
+                newMap.delete(currentPassenger.seat_number)
+            }
+            newMap.set(seatStr, `${currentPassenger?.first_name} ${currentPassenger?.last_name}`)
+            setOccupiedSeats(newMap)
+
+            setShowSeatModal(false)
+            setSelectedPassengerId(null)
+        } catch (err) {
+            console.error(err)
+            alert('Error al asignar asiento')
+        }
     }
 
     const handleLogout = async () => {
@@ -408,7 +473,30 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
 
                     {/* Reservation Info */}
                     <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)' }}>
-                        <h2 style={{ fontWeight: '700', marginBottom: '1.25rem', fontSize: '1.1rem', color: '#1e293b' }}>Información del Responsable</h2>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                            <h2 style={{ fontWeight: '700', margin: 0, fontSize: '1.1rem', color: '#1e293b' }}>Información del Responsable</h2>
+                            <Link
+                                href={`/admin/reservaciones/${params.id}/editar`}
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    padding: '0.5rem 1rem',
+                                    background: '#2c3e50',
+                                    color: 'white',
+                                    borderRadius: '8px',
+                                    textDecoration: 'none',
+                                    fontSize: '0.85rem',
+                                    fontWeight: '600'
+                                }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                                Editar Datos
+                            </Link>
+                        </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                             <div>
                                 <div style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Nombre</div>
@@ -489,54 +577,92 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                                     key={passenger.id}
                                     style={{
                                         display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
+                                        flexDirection: 'column',
+                                        gap: '0.75rem',
                                         padding: '1rem',
                                         background: '#f8fafc',
                                         borderRadius: '12px',
                                         border: '1px solid #f1f5f9'
                                     }}
                                 >
-                                    <div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                                            <span style={{ fontWeight: '600', color: '#94a3b8', fontSize: '0.9rem' }}>{index + 1}.</span>
-                                            <strong style={{ color: '#334155', fontSize: '1rem' }}>{passenger.first_name} {passenger.last_name}</strong>
+                                    {/* Passenger Info - Top Section */}
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                        <div style={{ flex: '1', minWidth: '150px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
+                                                <span style={{ fontWeight: '600', color: '#94a3b8', fontSize: '0.9rem' }}>{index + 1}.</span>
+                                                <strong style={{ color: '#334155', fontSize: '1rem' }}>{passenger.first_name} {passenger.last_name}</strong>
+                                            </div>
+                                            {passenger.congregation && (
+                                                <div style={{ color: '#64748b', fontSize: '0.85rem', paddingLeft: '1.4rem' }}>{passenger.congregation}</div>
+                                            )}
+                                        </div>
+
+                                        {/* Age & Status Badges - Right side on desktop, stacked on mobile */}
+                                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                                             {passenger.age !== null && passenger.age !== undefined && (
-                                                <span style={{ fontSize: '0.8rem', color: '#475569', background: '#e0e7ff', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: '600' }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#475569', background: '#e0e7ff', padding: '0.25rem 0.6rem', borderRadius: '6px', fontWeight: '600', whiteSpace: 'nowrap' }}>
                                                     {passenger.age} años
                                                 </span>
                                             )}
                                             {passenger.is_free_under6 && (
-                                                <span style={{ fontSize: '0.75rem', color: '#166534', background: '#dcfce7', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: '600' }}>
+                                                <span style={{ fontSize: '0.75rem', color: '#166534', background: '#dcfce7', padding: '0.25rem 0.5rem', borderRadius: '6px', fontWeight: '600' }}>
                                                     Gratis
                                                 </span>
                                             )}
                                         </div>
-                                        {passenger.congregation && (
-                                            <div style={{ color: '#64748b', fontSize: '0.85rem', paddingLeft: '1.4rem' }}>{passenger.congregation}</div>
-                                        )}
                                     </div>
 
-                                    {/* Seat Assignment */}
-                                    {['anticipo_pagado', 'pagado_completo'].includes(reservation.status) && (
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
-                                            <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700' }}>Asiento</span>
-                                            <input
-                                                type="text"
-                                                value={passenger.seat_number || ''}
-                                                onChange={(e) => handleSeatChange(passenger.id, e.target.value)}
-                                                placeholder="#"
-                                                style={{
-                                                    width: '40px',
-                                                    padding: '0.35rem',
-                                                    border: '1px solid #cbd5e1',
-                                                    borderRadius: '6px',
-                                                    textAlign: 'center',
-                                                    fontWeight: '700',
-                                                    color: '#1e293b',
-                                                    fontSize: '1rem'
-                                                }}
-                                            />
+                                    {/* Seat Assignment - Only for passengers who pay (not free under 6) */}
+                                    {['anticipo_pagado', 'pagado_completo'].includes(reservation.status) && !passenger.is_free_under6 && (
+                                        <div style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: '0.75rem',
+                                            padding: '0.75rem',
+                                            background: '#ffffff',
+                                            borderRadius: '8px',
+                                            border: passenger.seat_number ? '2px solid #16a34a' : '1px solid #e2e8f0'
+                                        }}>
+                                            {passenger.seat_number ? (
+                                                <>
+                                                    <span style={{ fontSize: '0.85rem', color: '#16a34a', fontWeight: '700' }}>
+                                                        Asiento #{passenger.seat_number}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => openSeatModal(passenger.id)}
+                                                        style={{
+                                                            padding: '0.5rem 0.75rem',
+                                                            background: '#f1f5f9',
+                                                            color: '#475569',
+                                                            border: 'none',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.8rem',
+                                                            fontWeight: '600',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        Cambiar
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button
+                                                    onClick={() => openSeatModal(passenger.id)}
+                                                    style={{
+                                                        width: '100%',
+                                                        padding: '0.6rem',
+                                                        background: '#3b82f6',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '8px',
+                                                        fontSize: '0.85rem',
+                                                        fontWeight: '700',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    Asignar Asiento
+                                                </button>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -946,6 +1072,138 @@ Para no perder tu lugar, es importante liquidar el viaje completo antes de esta 
                     </div>
                 </div>
             </main >
+
+            {/* Seat Selection Modal */}
+            {showSeatModal && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.85)',
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        justifyContent: 'center',
+                        zIndex: 100
+                    }}
+                    onClick={() => { setShowSeatModal(false); setSelectedPassengerId(null) }}
+                >
+                    <div
+                        style={{
+                            background: 'white',
+                            borderRadius: '20px 20px 0 0',
+                            padding: '1.5rem',
+                            width: '100%',
+                            maxWidth: '380px',
+                            maxHeight: '85vh',
+                            overflowY: 'auto'
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Modal Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>Selecciona asiento para</div>
+                                <div style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>
+                                    {passengers.find(p => p.id === selectedPassengerId)?.first_name} {passengers.find(p => p.id === selectedPassengerId)?.last_name}
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => { setShowSeatModal(false); setSelectedPassengerId(null) }}
+                                style={{ background: '#f1f5f9', border: 'none', width: '36px', height: '36px', borderRadius: '50%', fontSize: '1.25rem', cursor: 'pointer', color: '#64748b' }}
+                            >x</button>
+                        </div>
+
+                        {/* Legend */}
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginBottom: '1rem', padding: '0.5rem', background: '#f8fafc', borderRadius: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: '#64748b' }}>
+                                <div style={{ width: '16px', height: '16px', borderRadius: '4px', background: '#dcfce7', border: '2px solid #16a34a' }}></div>
+                                Libre
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', color: '#64748b' }}>
+                                <div style={{ width: '16px', height: '16px', borderRadius: '4px', background: '#ef4444', border: '2px solid #991b1b' }}></div>
+                                Ocupado
+                            </div>
+                        </div>
+
+                        {/* Seats Grid */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                            {Array.from({ length: 12 }, (_, rowIdx) => {
+                                const baseNum = rowIdx * 4 + 1
+                                const leftSeats = [baseNum, baseNum + 1].filter(n => n <= 47)
+                                const rightSeats = [baseNum + 2, baseNum + 3].filter(n => n <= 47)
+
+                                return (
+                                    <div key={rowIdx} style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
+                                        <div style={{ display: 'flex', gap: '0.3rem' }}>
+                                            {leftSeats.map(num => {
+                                                const seatStr = num.toString()
+                                                const currentPassenger = passengers.find(p => p.id === selectedPassengerId)
+                                                const isOwnSeat = currentPassenger?.seat_number === seatStr
+                                                const isOccupied = occupiedSeats.has(seatStr) && !isOwnSeat
+
+                                                return (
+                                                    <button
+                                                        key={num}
+                                                        onClick={() => !isOccupied && assignSeat(num)}
+                                                        disabled={isOccupied}
+                                                        style={{
+                                                            width: '38px',
+                                                            height: '38px',
+                                                            borderRadius: '6px',
+                                                            border: isOwnSeat ? '3px solid #3b82f6' : isOccupied ? '2px solid #991b1b' : '2px solid #16a34a',
+                                                            background: isOwnSeat ? '#dbeafe' : isOccupied ? '#ef4444' : '#dcfce7',
+                                                            color: isOwnSeat ? '#1d4ed8' : isOccupied ? 'white' : '#166534',
+                                                            fontWeight: '700',
+                                                            fontSize: '0.85rem',
+                                                            cursor: isOccupied ? 'not-allowed' : 'pointer'
+                                                        }}
+                                                    >
+                                                        {num}
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+                                        <div style={{ width: '20px' }}></div>
+                                        <div style={{ display: 'flex', gap: '0.3rem' }}>
+                                            {rightSeats.map(num => {
+                                                const seatStr = num.toString()
+                                                const currentPassenger = passengers.find(p => p.id === selectedPassengerId)
+                                                const isOwnSeat = currentPassenger?.seat_number === seatStr
+                                                const isOccupied = occupiedSeats.has(seatStr) && !isOwnSeat
+
+                                                return (
+                                                    <button
+                                                        key={num}
+                                                        onClick={() => !isOccupied && assignSeat(num)}
+                                                        disabled={isOccupied}
+                                                        style={{
+                                                            width: '38px',
+                                                            height: '38px',
+                                                            borderRadius: '6px',
+                                                            border: isOwnSeat ? '3px solid #3b82f6' : isOccupied ? '2px solid #991b1b' : '2px solid #16a34a',
+                                                            background: isOwnSeat ? '#dbeafe' : isOccupied ? '#ef4444' : '#dcfce7',
+                                                            color: isOwnSeat ? '#1d4ed8' : isOccupied ? 'white' : '#166534',
+                                                            fontWeight: '700',
+                                                            fontSize: '0.85rem',
+                                                            cursor: isOccupied ? 'not-allowed' : 'pointer'
+                                                        }}
+                                                    >
+                                                        {num}
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+
+                        <p style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+                            Toca un asiento verde para asignarlo
+                        </p>
+                    </div>
+                </div>
+            )}
         </div >
     )
 }

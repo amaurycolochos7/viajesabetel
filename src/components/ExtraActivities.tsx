@@ -33,7 +33,6 @@ export default function ExtraActivities() {
                             src="/aztlan.png"
                             alt="Aztlán Parque Urbano"
                             fill
-                            quality={100}
                             sizes="(max-width: 768px) 100vw, 600px"
                             style={{ objectFit: 'cover' }}
                         />
@@ -103,7 +102,6 @@ export default function ExtraActivities() {
                             src="/acuario.png"
                             alt="Acuario Veracruz Entrada"
                             fill
-                            quality={100}
                             sizes="(max-width: 768px) 100vw, 600px"
                             style={{ objectFit: 'cover' }}
                         />

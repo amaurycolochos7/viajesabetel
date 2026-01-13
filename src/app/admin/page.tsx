@@ -245,11 +245,37 @@ export default function AdminDashboard() {
                             textDecoration: 'none',
                             textAlign: 'center',
                             fontWeight: '600',
-                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                            gridColumn: '1 / -1'
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
                         }}
                     >
                         Gestionar Grupos de Tour
+                    </Link>
+                    <Link
+                        href="/admin/asientos"
+                        style={{
+                            background: '#2c3e50',
+                            color: 'white',
+                            padding: '1rem',
+                            borderRadius: '12px',
+                            textDecoration: 'none',
+                            textAlign: 'center',
+                            fontWeight: '600',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem'
+                        }}
+                    >
+                        Mapa de Asientos
+                        <span style={{
+                            background: 'rgba(255,255,255,0.2)',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '6px',
+                            fontSize: '0.8rem'
+                        }}>
+                            {stats?.totalSeats || 0}/47
+                        </span>
                     </Link>
                 </div>
 

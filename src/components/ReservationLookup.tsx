@@ -52,6 +52,7 @@ export default function ReservationLookup() {
     const [isSearching, setIsSearching] = useState(false)
     const [reservation, setReservation] = useState<ReservationInfo | null>(null)
     const [error, setError] = useState('')
+    const [showSeatMapModal, setShowSeatMapModal] = useState(false)
 
     const generateTicketImage = async (res: ReservationInfo) => {
         const ticketElement = document.getElementById('reservation-ticket-lookup')
@@ -204,6 +205,31 @@ export default function ReservationLookup() {
                     </Link>
 
                     <Link
+                        href="/modificar-reservacion"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.75rem',
+                            padding: '1rem',
+                            background: '#2c3e50',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '1rem',
+                            fontWeight: '500',
+                            textDecoration: 'none',
+                            boxShadow: '0 2px 4px rgba(44, 62, 80, 0.3)',
+                        }}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                        Modificar Mi Reservación
+                    </Link>
+
+                    <Link
                         href="/terminos"
                         style={{
                             display: 'flex',
@@ -317,81 +343,104 @@ export default function ReservationLookup() {
 
             {reservation && (
                 <div className="fade-in">
-                    {/* Status Badge */}
+                    {/* Status Badge - Más compacto */}
                     <div style={{
                         background: getStatusLabel(reservation.status).bg,
                         color: getStatusLabel(reservation.status).color,
-                        padding: '1rem',
+                        padding: '0.75rem 1rem',
                         borderRadius: '8px',
                         textAlign: 'center',
                         fontWeight: '600',
-                        marginBottom: '1.5rem',
-                        border: `1px solid ${getStatusLabel(reservation.status).color}20`
+                        fontSize: '0.9rem',
+                        marginBottom: '1rem',
+                        border: `1px solid ${getStatusLabel(reservation.status).color}30`
                     }}>
                         {getStatusLabel(reservation.status).text}
                     </div>
 
-                    {/* Reservation Code */}
-                    {/* Reservation Code */}
+                    {/* Códigos de Reservación y Abordaje - Diseño Vertical */}
                     <div style={{
                         background: '#ffffff',
-                        padding: '1.5rem',
                         borderRadius: '12px',
-                        textAlign: 'center',
-                        marginBottom: '1.5rem',
-                        border: '2px solid #e0e0e0',
-                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+                        marginBottom: '1rem',
+                        border: '1px solid #e0e0e0',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.03)',
+                        overflow: 'hidden'
                     }}>
-                        <p style={{ margin: 0, color: '#666', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '500' }}>Código de Reservación</p>
-                        <p style={{ margin: '0.5rem 0 1rem', fontSize: '2.5rem', fontWeight: '800', color: '#2c3e50', letterSpacing: '3px', fontFamily: 'monospace' }}>
-                            {reservation.reservation_code}
-                        </p>
+                        {/* Código de Reservación */}
+                        <div style={{ padding: '1rem', textAlign: 'center' }}>
+                            <p style={{ margin: 0, color: '#78909c', fontSize: '0.65rem', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '1px' }}>Código de Reservación</p>
+                            <p style={{
+                                margin: '0.35rem 0 0',
+                                fontSize: '1.1rem',
+                                fontWeight: '800',
+                                color: '#1565c0',
+                                fontFamily: 'monospace',
+                                letterSpacing: '0.5px',
+                                wordBreak: 'break-all'
+                            }}>
+                                {reservation.reservation_code}
+                            </p>
+                        </div>
 
+                        {/* Código de Abordaje - Barra destacada */}
                         {reservation.boarding_access_code && (
                             <div style={{
-                                marginTop: '1rem',
-                                borderTop: '2px dashed #eee',
-                                paddingTop: '1rem',
-                                background: '#fff3e0',
-                                margin: '1rem -1.5rem -1.5rem', // Bleed out to bottom
+                                background: 'linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%)',
                                 padding: '1rem',
-                                borderRadius: '0 0 12px 12px'
+                                borderTop: '1px dashed #ffe082',
+                                textAlign: 'center'
                             }}>
-                                <p style={{ margin: 0, color: '#e65100', fontSize: '0.85rem', textTransform: 'uppercase', fontWeight: '600' }}>Código de Abordaje</p>
-                                <p style={{ margin: '0.25rem 0 0', fontSize: '2rem', fontWeight: '900', color: '#ef6c00', letterSpacing: '2px' }}>
+                                <p style={{
+                                    margin: 0,
+                                    color: '#bf360c',
+                                    fontSize: '0.65rem',
+                                    textTransform: 'uppercase',
+                                    fontWeight: '600',
+                                    letterSpacing: '1px',
+                                    marginBottom: '0.35rem'
+                                }}>
+                                    Código de Abordaje
+                                </p>
+                                <p style={{
+                                    margin: 0,
+                                    fontSize: '1.75rem',
+                                    fontWeight: '900',
+                                    color: '#e65100',
+                                    fontFamily: 'monospace',
+                                    letterSpacing: '3px'
+                                }}>
                                     {reservation.boarding_access_code}
                                 </p>
                             </div>
                         )}
                     </div>
 
-                    {/* Responsible Info */}
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <h3 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.75rem', color: '#546e7a', textTransform: 'uppercase' }}>
+                    {/* Datos del Responsable - Más Compacto */}
+                    <div style={{ marginBottom: '1rem' }}>
+                        <h3 style={{ fontSize: '0.75rem', fontWeight: '600', marginBottom: '0.5rem', color: '#78909c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                             Datos del Responsable
                         </h3>
-                        <div style={{ background: '#ffffff', border: '1px solid #eceff1', padding: '1rem', borderRadius: '8px' }}>
-                            <p style={{ margin: '0 0 0.5rem', fontSize: '1rem', color: '#263238' }}>
-                                <strong>{reservation.responsible_name}</strong>
+                        <div style={{ background: '#ffffff', border: '1px solid #eceff1', padding: '0.75rem 1rem', borderRadius: '8px' }}>
+                            <p style={{ margin: '0 0 0.25rem', fontSize: '0.95rem', color: '#263238', fontWeight: '600' }}>
+                                {reservation.responsible_name}
                             </p>
-                            <p style={{ margin: '0 0 0.5rem', fontSize: '0.95rem', color: '#455a64' }}>
-                                Tel: {reservation.responsible_phone}
-                            </p>
-                            {reservation.responsible_congregation && (
-                                <p style={{ margin: 0, fontSize: '0.95rem', color: '#455a64' }}>
-                                    Cong: {reservation.responsible_congregation}
-                                </p>
-                            )}
+                            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.85rem', color: '#546e7a' }}>
+                                <span>📞 {reservation.responsible_phone}</span>
+                                {reservation.responsible_congregation && (
+                                    <span>⛪ {reservation.responsible_congregation}</span>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    {/* Passengers */}
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                            <h3 style={{ fontSize: '0.95rem', fontWeight: '600', margin: 0, color: '#546e7a', textTransform: 'uppercase' }}>
+                    {/* Lista de Pasajeros - Diseño Mejorado */}
+                    <div style={{ marginBottom: '1rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                            <h3 style={{ fontSize: '0.75rem', fontWeight: '600', margin: 0, color: '#78909c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                                 Pasajeros
                             </h3>
-                            <span style={{ background: '#eceff1', padding: '2px 8px', borderRadius: '10px', fontSize: '0.8rem', fontWeight: '600', color: '#546e7a' }}>
+                            <span style={{ background: '#e3f2fd', color: '#1565c0', padding: '0.15rem 0.5rem', borderRadius: '10px', fontSize: '0.75rem', fontWeight: '600' }}>
                                 {reservation.passengers.length}
                             </span>
                         </div>
@@ -400,144 +449,172 @@ export default function ReservationLookup() {
                                 <div
                                     key={idx}
                                     style={{
-                                        display: 'flex',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center',
-                                        padding: '1rem',
-                                        borderBottom: idx < reservation.passengers.length - 1 ? '1px solid #eceff1' : 'none',
+                                        padding: '0.75rem 1rem',
+                                        borderBottom: idx < reservation.passengers.length - 1 ? '1px solid #f0f0f0' : 'none',
+                                        background: idx % 2 === 0 ? '#fff' : '#fafafa'
                                     }}
                                 >
-                                    <span style={{ fontWeight: '500', color: '#37474f' }}>
+                                    {/* Nombre completo */}
+                                    <div style={{
+                                        fontWeight: '600',
+                                        color: '#263238',
+                                        fontSize: '0.95rem',
+                                        marginBottom: '0.35rem'
+                                    }}>
                                         {p.first_name} {p.last_name}
-                                    </span>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        {p.seat_number && (
+                                    </div>
+
+                                    {/* Badges: Asiento y Edad */}
+                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                        {p.seat_number ? (
                                             <span style={{
-                                                fontSize: '0.85rem',
+                                                fontSize: '0.8rem',
                                                 padding: '0.25rem 0.6rem',
-                                                borderRadius: '4px',
+                                                borderRadius: '6px',
                                                 background: '#fff3e0',
-                                                color: '#ef6c00',
-                                                fontWeight: 'bold',
+                                                color: '#e65100',
+                                                fontWeight: '700',
                                                 border: '1px solid #ffe0b2'
                                             }}>
-                                                Asiento: {p.seat_number}
+                                                Asiento #{p.seat_number}
+                                            </span>
+                                        ) : (
+                                            <span style={{
+                                                fontSize: '0.8rem',
+                                                color: '#bdbdbd',
+                                                padding: '0.25rem 0.6rem',
+                                                background: '#f5f5f5',
+                                                borderRadius: '6px'
+                                            }}>
+                                                Sin asiento
                                             </span>
                                         )}
                                         <span style={{
-                                            fontSize: '0.75rem',
-                                            padding: '0.25rem 0.5rem',
-                                            borderRadius: '4px',
-                                            background: p.is_free_under6 ? '#e8f5e9' : '#f5f5f5',
-                                            color: p.is_free_under6 ? '#2e7d32' : '#78909c',
+                                            fontSize: '0.8rem',
+                                            padding: '0.25rem 0.6rem',
+                                            borderRadius: '6px',
+                                            background: p.is_free_under6 ? '#e8f5e9' : '#e3f2fd',
+                                            color: p.is_free_under6 ? '#2e7d32' : '#1565c0',
                                             fontWeight: '500'
                                         }}>
-                                            {p.is_free_under6 ? 'Menor (Gratis)' : (p.age !== undefined && p.age !== null ? `Niño (${p.age})` : 'Adulto')}
+                                            {p.is_free_under6 ? 'Menor (Gratis)' : (p.age !== undefined && p.age !== null ? `${p.age} años` : '—')}
                                         </span>
                                     </div>
                                 </div>
                             ))}
                         </div>
+
+                        {/* Button to view seat map - only if at least one passenger has a seat */}
+                        {reservation.passengers.some(p => p.seat_number) && (
+                            <button
+                                onClick={() => setShowSeatMapModal(true)}
+                                style={{
+                                    width: '100%',
+                                    marginTop: '0.75rem',
+                                    padding: '0.75rem',
+                                    background: '#2c3e50',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    fontSize: '0.9rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '0.5rem'
+                                }}
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                    <line x1="3" y1="9" x2="21" y2="9" />
+                                    <line x1="9" y1="21" x2="9" y2="9" />
+                                </svg>
+                                Ver Mapa de Asientos
+                            </button>
+                        )}
                     </div>
 
                     {/* Tourist Attractions Section */}
-                    {reservation.ticket_orders && reservation.ticket_orders.length > 0 && (
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <h3 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.75rem', color: '#546e7a', textTransform: 'uppercase' }}>
-                                Entradas a Centros Turísticos
-                            </h3>
-                            <div style={{ background: '#ffffff', border: '1px solid #eceff1', borderRadius: '8px', overflow: 'hidden' }}>
-                                {reservation.ticket_orders.map((order, idx) => (
-                                    <div
-                                        key={order.id}
-                                        style={{
-                                            padding: '1rem',
-                                            borderBottom: idx < reservation.ticket_orders!.length - 1 ? '1px solid #eceff1' : 'none'
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', alignItems: 'center' }}>
-                                            <div>
-                                                <div style={{ fontSize: '0.85rem', fontWeight: '600', color: '#37474f' }}>
-                                                    Orden del {new Date(order.created_at).toLocaleDateString('es-MX')}
+                    {
+                        reservation.ticket_orders && reservation.ticket_orders.length > 0 && (
+                            <div style={{ marginBottom: '1rem' }}>
+                                <h3 style={{ fontSize: '0.75rem', fontWeight: '600', marginBottom: '0.5rem', color: '#78909c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    Entradas Turísticas
+                                </h3>
+                                <div style={{ background: '#ffffff', border: '1px solid #eceff1', borderRadius: '8px', overflow: 'hidden' }}>
+                                    {reservation.ticket_orders.map((order, idx) => (
+                                        <div
+                                            key={order.id}
+                                            style={{
+                                                padding: '0.75rem',
+                                                borderBottom: idx < reservation.ticket_orders!.length - 1 ? '1px solid #eceff1' : 'none'
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                                <div style={{ fontSize: '0.8rem', color: '#546e7a' }}>
+                                                    {new Date(order.created_at).toLocaleDateString('es-MX')} • {order.payment_method === 'card' ? 'MP' : 'Transf.'}
                                                 </div>
-                                                <div style={{ fontSize: '0.75rem', color: '#78909c' }}>
-                                                    {order.payment_method === 'card' ? 'MercadoPago' : 'Transferencia'}
-                                                </div>
-                                            </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#10b981' }}>
-                                                    ${order.total_amount.toLocaleString('es-MX')}
-                                                </div>
-                                                <span style={{
-                                                    fontSize: '0.7rem',
-                                                    fontWeight: '600',
-                                                    textTransform: 'uppercase',
-                                                    padding: '0.15rem 0.4rem',
-                                                    borderRadius: '4px',
-                                                    background: order.status === 'paid' ? '#dcfce7' : '#fef3c7',
-                                                    color: order.status === 'paid' ? '#166534' : '#d97706'
-                                                }}>
-                                                    {order.status === 'paid' ? 'PAGADO' : 'PENDIENTE'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div style={{ background: '#fafafa', padding: '0.75rem', borderRadius: '6px', fontSize: '0.85rem' }}>
-                                            {order.items.map((item: any, i: number) => (
-                                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: i < order.items.length - 1 ? '0.25rem' : 0 }}>
-                                                    <span style={{ color: '#455a64' }}>
-                                                        <strong style={{ color: '#263238' }}>{item.passengerName}</strong> — {item.name} ({item.variantName})
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <span style={{ fontSize: '0.95rem', fontWeight: '700', color: '#10b981' }}>
+                                                        ${order.total_amount.toLocaleString('es-MX')}
                                                     </span>
-                                                    <span style={{ fontWeight: '600' }}>${item.price}</span>
+                                                    <span style={{
+                                                        fontSize: '0.6rem',
+                                                        fontWeight: '600',
+                                                        textTransform: 'uppercase',
+                                                        padding: '0.1rem 0.3rem',
+                                                        borderRadius: '3px',
+                                                        background: order.status === 'paid' ? '#dcfce7' : '#fef3c7',
+                                                        color: order.status === 'paid' ? '#166534' : '#d97706'
+                                                    }}>
+                                                        {order.status === 'paid' ? '✓' : '⏳'}
+                                                    </span>
                                                 </div>
-                                            ))}
+                                            </div>
+                                            <div style={{ background: '#fafafa', padding: '0.5rem', borderRadius: '4px', fontSize: '0.8rem' }}>
+                                                {order.items.map((item: any, i: number) => (
+                                                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: i < order.items.length - 1 ? '0.2rem' : 0 }}>
+                                                        <span style={{ color: '#455a64' }}>{item.passengerName} — {item.name}</span>
+                                                        <span style={{ fontWeight: '600' }}>${item.price}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Payment Info */}
-                    <div style={{ marginBottom: '1.5rem' }}>
-                        <h3 style={{ fontSize: '0.95rem', fontWeight: '600', marginBottom: '0.75rem', color: '#546e7a', textTransform: 'uppercase' }}>
-                            Resumen de Pago del Viaje
-                        </h3>
-                        <div style={{ background: '#fafafa', border: '1px solid #eceff1', padding: '1rem', borderRadius: '8px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
-                                <span style={{ color: '#546e7a' }}>Total del Viaje:</span>
-                                <strong style={{ color: '#263238' }}>${reservation.total_amount.toLocaleString('es-MX')}</strong>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.95rem' }}>
-                                <span style={{ color: '#546e7a' }}>Anticipo Requerido:</span>
-                                <strong style={{ color: '#263238' }}>${reservation.deposit_required.toLocaleString('es-MX')}</strong>
-                            </div>
-                            <hr style={{ margin: '0.75rem 0', border: 'none', borderTop: '1px solid #cfd8dc' }} />
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: '1rem', fontWeight: '600', color: '#37474f' }}>Monto Pagado:</span>
-                                <span style={{
-                                    fontSize: '1.25rem',
-                                    fontWeight: 'bold',
-                                    color: reservation.amount_paid >= reservation.total_amount ? '#2e7d32' : '#f57c00'
-                                }}>
-                                    ${reservation.amount_paid.toLocaleString('es-MX')}
-                                </span>
-                            </div>
-                            {reservation.amount_paid < reservation.total_amount && (
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.25rem' }}>
-                                    <span style={{ fontSize: '0.85rem', color: '#c62828', fontWeight: '500' }}>
-                                        Resta: ${(reservation.total_amount - reservation.amount_paid).toLocaleString('es-MX')}
-                                    </span>
+                                    ))}
                                 </div>
-                            )}
+                            </div>
+                        )
+                    }
+
+                    {/* Resumen de Pagos - Compacto */}
+                    <div style={{ marginBottom: '1rem' }}>
+                        <h3 style={{ fontSize: '0.75rem', fontWeight: '600', marginBottom: '0.5rem', color: '#78909c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Resumen de Pago
+                        </h3>
+                        <div style={{ background: '#f8f9fa', border: '1px solid #eceff1', padding: '0.75rem', borderRadius: '8px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', textAlign: 'center', marginBottom: '0.75rem' }}>
+                                <div>
+                                    <div style={{ fontSize: '0.65rem', color: '#78909c', textTransform: 'uppercase' }}>Total</div>
+                                    <div style={{ fontSize: '1rem', fontWeight: '700', color: '#263238' }}>${reservation.total_amount.toLocaleString('es-MX')}</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '0.65rem', color: '#78909c', textTransform: 'uppercase' }}>Pagado</div>
+                                    <div style={{ fontSize: '1rem', fontWeight: '700', color: '#2e7d32' }}>${reservation.amount_paid.toLocaleString('es-MX')}</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '0.65rem', color: '#78909c', textTransform: 'uppercase' }}>Resta</div>
+                                    <div style={{ fontSize: '1rem', fontWeight: '700', color: reservation.amount_paid >= reservation.total_amount ? '#2e7d32' : '#e53935' }}>
+                                        ${(reservation.total_amount - reservation.amount_paid).toLocaleString('es-MX')}
+                                    </div>
+                                </div>
+                            </div>
 
                             {/* Deadline Notice */}
                             {reservation.status !== 'pagado_completo' && (
-                                <div style={{ marginTop: '1rem', background: '#fff3e0', border: '1px solid #ffe0b2', borderRadius: '6px', padding: '0.75rem' }}>
-                                    <p style={{ margin: '0 0 0.25rem 0', fontSize: '0.85rem', fontWeight: 'bold', color: '#e65100' }}>
-                                        FECHA LÍMITE DE PAGO: 23 DE MARZO 2026
-                                    </p>
-                                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#ef6c00' }}>
-                                        Contacta al administrador para liquidar tu viaje antes de esta fecha.
+                                <div style={{ background: '#fff3e0', border: '1px solid #ffe0b2', borderRadius: '6px', padding: '0.5rem', textAlign: 'center' }}>
+                                    <p style={{ margin: 0, fontSize: '0.75rem', fontWeight: 'bold', color: '#e65100' }}>
+                                        ⚠️ FECHA LÍMITE: 23 DE MARZO 2026
                                     </p>
                                 </div>
                             )}
@@ -583,7 +660,7 @@ export default function ReservationLookup() {
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                         Descargar Ticket Oficial
                     </button>
-                </div>
+                </div >
             )
             }
 
@@ -594,6 +671,134 @@ export default function ReservationLookup() {
                     </div>
                 )
             }
+
+            {/* Seat Map Modal */}
+            {showSeatMapModal && reservation && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        background: 'rgba(0,0,0,0.85)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 100,
+                        padding: '1rem'
+                    }}
+                    onClick={() => setShowSeatMapModal(false)}
+                >
+                    <div
+                        style={{
+                            background: 'white',
+                            borderRadius: '20px',
+                            padding: '1.5rem',
+                            width: '100%',
+                            maxWidth: '340px',
+                            maxHeight: '90vh',
+                            overflowY: 'auto'
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: '#1e293b' }}>Tus Asientos</h3>
+                            <button
+                                onClick={() => setShowSeatMapModal(false)}
+                                style={{ background: '#f1f5f9', border: 'none', width: '32px', height: '32px', borderRadius: '50%', fontSize: '1.1rem', cursor: 'pointer', color: '#64748b' }}
+                            >x</button>
+                        </div>
+
+                        {/* Legend */}
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '1.25rem', marginBottom: '1rem', padding: '0.5rem', background: '#f8fafc', borderRadius: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.7rem', color: '#64748b' }}>
+                                <div style={{ width: '16px', height: '16px', borderRadius: '4px', background: '#3b82f6', border: '2px solid #1d4ed8' }}></div>
+                                Tuyo
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.7rem', color: '#64748b' }}>
+                                <div style={{ width: '16px', height: '16px', borderRadius: '4px', background: '#e2e8f0', border: '1px solid #cbd5e1' }}></div>
+                                Otro
+                            </div>
+                        </div>
+
+                        {/* Bus Layout */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                            {Array.from({ length: 12 }, (_, rowIdx) => {
+                                const baseNum = rowIdx * 4 + 1
+                                const leftSeats = [baseNum, baseNum + 1].filter(n => n <= 47)
+                                const rightSeats = [baseNum + 2, baseNum + 3].filter(n => n <= 47)
+                                const mySeats = reservation.passengers.map(p => p.seat_number).filter(Boolean)
+
+                                return (
+                                    <div key={rowIdx} style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem' }}>
+                                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                            {leftSeats.map(num => {
+                                                const isMine = mySeats.includes(num.toString())
+                                                return (
+                                                    <div
+                                                        key={num}
+                                                        style={{
+                                                            width: '34px',
+                                                            height: '34px',
+                                                            borderRadius: '6px',
+                                                            border: isMine ? '2px solid #1d4ed8' : '1px solid #cbd5e1',
+                                                            background: isMine ? '#3b82f6' : '#e2e8f0',
+                                                            color: isMine ? 'white' : '#94a3b8',
+                                                            fontWeight: '700',
+                                                            fontSize: '0.8rem',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}
+                                                    >
+                                                        {num}
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                        <div style={{ width: '16px' }}></div>
+                                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                            {rightSeats.map(num => {
+                                                const isMine = mySeats.includes(num.toString())
+                                                return (
+                                                    <div
+                                                        key={num}
+                                                        style={{
+                                                            width: '34px',
+                                                            height: '34px',
+                                                            borderRadius: '6px',
+                                                            border: isMine ? '2px solid #1d4ed8' : '1px solid #cbd5e1',
+                                                            background: isMine ? '#3b82f6' : '#e2e8f0',
+                                                            color: isMine ? 'white' : '#94a3b8',
+                                                            fontWeight: '700',
+                                                            fontSize: '0.8rem',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center'
+                                                        }}
+                                                    >
+                                                        {num}
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+
+                        {/* Your seats list */}
+                        <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#eff6ff', borderRadius: '8px' }}>
+                            <div style={{ fontSize: '0.75rem', color: '#1d4ed8', fontWeight: '600', marginBottom: '0.5rem' }}>Tus asientos asignados:</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                {reservation.passengers.filter(p => p.seat_number).map((p, idx) => (
+                                    <span key={idx} style={{ background: '#3b82f6', color: 'white', padding: '0.35rem 0.65rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600' }}>
+                                        #{p.seat_number} - {p.first_name}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section >
     )
 }
@@ -654,7 +859,7 @@ function TicketTemplate({ reservation }: { reservation: ReservationInfo }) {
                                 <td style={{ padding: '0.75rem', color: '#90a4ae', width: '40px' }}>{i + 1}</td>
                                 <td style={{ padding: '0.75rem', fontWeight: '600', color: '#263238' }}>{p.first_name} {p.last_name}</td>
                                 <td style={{ padding: '0.75rem', color: '#546e7a', textAlign: 'center' }}>
-                                    {p.is_free_under6 ? 'Menor' : p.age ? `${p.age} años` : 'Adulto'}
+                                    {p.is_free_under6 ? 'Menor (Gratis)' : (p.age !== undefined && p.age !== null ? `${p.age} años` : '—')}
                                 </td>
                                 <td style={{ padding: '0.75rem', textAlign: 'right' }}>
                                     {p.seat_number ? (
