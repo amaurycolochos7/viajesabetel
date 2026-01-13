@@ -186,9 +186,10 @@ export default function ReservationLookup() {
                         href="/mi-grupo"
                         style={{
                             display: 'flex',
+                            flexDirection: 'column',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: '0.75rem',
+                            gap: '0.5rem',
                             padding: '1rem',
                             background: '#fff',
                             color: '#2c3e50',
@@ -200,8 +201,13 @@ export default function ReservationLookup() {
                             transition: 'background 0.2s',
                         }}
                     >
-                        <UsersIcon />
-                        Consultar Mi Grupo
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <UsersIcon />
+                            <span>Consultar Mi Grupo de Tour</span>
+                        </div>
+                        <span style={{ fontSize: '0.75rem', color: '#78909c', textAlign: 'center', lineHeight: 1.4 }}>
+                            Ver número de grupo, horario de acceso a Betel y lista de integrantes
+                        </span>
                     </Link>
 
                     <Link

@@ -139,9 +139,20 @@ export default function MiGrupoPage() {
                 </Link>
 
                 <div className="card">
-                    <h2 className="section-title">Ingresa tu código de reservación</h2>
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-                        El código fue enviado a tu WhatsApp al hacer tu reservación. Tiene el formato: BETEL-2026-XXXXXX
+                    <h2 className="section-title">Consulta tu grupo de acceso al Tour</h2>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '0.75rem', fontSize: '0.95rem', lineHeight: 1.5 }}>
+                        Aquí puedes ver la información de tu grupo para el <strong>recorrido guiado dentro de las instalaciones de Betel</strong>.
+                    </p>
+                    <div style={{ background: '#e3f2fd', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1.25rem', fontSize: '0.85rem', color: '#1565c0' }}>
+                        <strong>¿Qué verás?</strong>
+                        <ul style={{ margin: '0.5rem 0 0 1.25rem', padding: 0 }}>
+                            <li>Número de grupo asignado</li>
+                            <li>Horario de acceso al tour</li>
+                            <li>Lista completa de integrantes</li>
+                        </ul>
+                    </div>
+                    <p style={{ color: '#78909c', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                        Ingresa tu código de reservación (enviado a tu WhatsApp con el formato: BETEL-2026-XXXXXX)
                     </p>
 
                     <form onSubmit={handleSearch}>
