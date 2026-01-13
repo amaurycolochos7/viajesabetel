@@ -168,15 +168,17 @@ export default function ReservationLookup() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '0.75rem',
-                            padding: '1rem 1.25rem',
-                            background: 'linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%)',
+                            padding: '1rem',
+                            background: '#4a6da7', // JW Blue
                             color: 'white',
-                            border: 'none',
-                            borderRadius: '12px',
+                            border: '1px solid #365180',
+                            borderRadius: '4px', // Square-ish
                             fontSize: '1rem',
                             fontWeight: '600',
                             cursor: 'pointer',
-                            boxShadow: '0 4px 12px rgba(63, 81, 181, 0.35)',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+                            transition: 'background 0.2s',
+                            width: '100%',
                         }}
                     >
                         <SearchIcon />
@@ -190,21 +192,21 @@ export default function ReservationLookup() {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.75rem',
-                            padding: '1rem 1.25rem',
-                            background: 'linear-gradient(135deg, #2e7d32 0%, #43a047 100%)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '12px',
+                            padding: '1rem',
+                            background: '#f8f9fa',
+                            color: '#4a6da7',
+                            border: '1px solid #4a6da7',
+                            borderRadius: '4px',
                             fontSize: '1rem',
                             fontWeight: '600',
                             textDecoration: 'none',
-                            boxShadow: '0 4px 12px rgba(46, 125, 50, 0.35)',
+                            transition: 'background 0.2s',
                         }}
                     >
                         <UsersIcon />
                         <div style={{ textAlign: 'left' }}>
                             <div>Consultar Mi Grupo de Tour</div>
-                            <div style={{ fontSize: '0.7rem', fontWeight: '400', opacity: 0.9, marginTop: '2px' }}>
+                            <div style={{ fontSize: '0.75rem', fontWeight: '400', color: '#555', marginTop: '2px' }}>
                                 Número de grupo, horario y lista de integrantes
                             </div>
                         </div>
@@ -218,49 +220,51 @@ export default function ReservationLookup() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '0.75rem',
-                            padding: '0.9rem 1.25rem',
-                            background: 'white',
-                            color: '#37474f',
-                            border: '2px solid #b0bec5',
-                            borderRadius: '12px',
-                            fontSize: '0.95rem',
+                            padding: '1rem',
+                            background: '#4a6da7',
+                            color: 'white',
+                            border: '1px solid #365180',
+                            borderRadius: '4px',
+                            fontSize: '1rem',
                             fontWeight: '600',
                             textDecoration: 'none',
+                            boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
                         }}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
                         Modificar Mi Reservación
                     </Link>
 
-                    {/* Botón de términos */}
-                    <Link
-                        href="/terminos"
-                        style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '0.5rem',
-                            padding: '0.65rem',
-                            background: 'transparent',
-                            color: '#78909c',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontSize: '0.85rem',
-                            fontWeight: '500',
-                            textDecoration: 'none',
-                        }}
-                    >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                        </svg>
-                        Términos y condiciones
-                    </Link>
+                    {/* Botón de términos - Alineación corregida */}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem' }}>
+                        <Link
+                            href="/terminos"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                color: '#555',
+                                fontSize: '0.9rem',
+                                textDecoration: 'none',
+                                padding: '0.5rem 0.75rem',
+                                borderRadius: '4px',
+                                transition: 'background 0.2s',
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', color: '#777' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                </svg>
+                            </div>
+                            <span style={{ borderBottom: '1px solid transparent' }}>Términos y condiciones del Viaje</span>
+                        </Link>
+                    </div>
                 </div>
             </section >
         )
