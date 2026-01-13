@@ -152,7 +152,7 @@ export default function MiGrupoPage() {
                         </ul>
                     </div>
                     <p style={{ color: '#78909c', marginBottom: '1rem', fontSize: '0.85rem' }}>
-                        Ingresa tu código de reservación (enviado a tu WhatsApp con el formato: BETEL-2026-XXXXXX)
+                        Ingresa tu código de reservación (aparece en la imagen que descargaste al confirmar: BETEL-2026-XXXXXX)
                     </p>
 
                     <form onSubmit={handleSearch}>
