@@ -211,7 +211,8 @@ export default function ModificarReservacionPage() {
                     seats_total: activePassengers.length,
                     seats_payable: payable,
                     total_amount: total,
-                    deposit_required: Math.ceil(total * 0.5)
+                    deposit_required: Math.ceil(total * 0.5),
+                    responsible_phone: reservation.responsible_phone
                 })
                 .eq('id', reservation.id)
 
@@ -407,6 +408,26 @@ export default function ModificarReservacionPage() {
                         Cambios guardados correctamente
                     </div>
                 )}
+
+                <div style={{ background: 'white', borderRadius: '16px', padding: '1rem', marginBottom: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+                    <label style={{ display: 'block', marginBottom: '0.4rem', fontWeight: '600', color: '#1e293b', fontSize: '0.85rem' }}>
+                        Teléfono del Responsable
+                    </label>
+                    <input
+                        type="tel"
+                        value={reservation?.responsible_phone || ''}
+                        onChange={e => reservation && setReservation({ ...reservation, responsible_phone: e.target.value })}
+                        placeholder="Ej: 961 123 4567"
+                        style={{
+                            width: '100%',
+                            padding: '0.8rem',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '10px',
+                            fontSize: '1rem',
+                            background: '#f8fafc'
+                        }}
+                    />
+                </div>
 
                 {/* Passengers Section */}
                 <div style={{ background: 'white', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
