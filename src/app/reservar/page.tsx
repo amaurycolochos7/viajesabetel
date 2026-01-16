@@ -36,11 +36,12 @@ export default function ReservarPage() {
     const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null)
     const [isDeposit, setIsDeposit] = useState(true)
     const [termsAccepted, setTermsAccepted] = useState(false)
+    const [requiresDeposit, setRequiresDeposit] = useState(true)
 
     const totalSeats = adultsCount + childrenCount
     const seatsPayable = totalSeats
     const totalAmount = seatsPayable * 1800
-    const depositRequired = totalAmount * 0.5
+    const depositRequired = requiresDeposit ? (totalAmount * 0.5) : 0
 
     // Format currency with .00 decimals
     const formatMoney = (amount: number) => {
@@ -148,6 +149,7 @@ export default function ReservarPage() {
                 p_responsible_phone: responsiblePhone,
                 p_responsible_congregation: responsibleCongregation || null,
                 p_passengers: passengers,
+                p_requires_deposit: requiresDeposit,
             })
 
             if (rpcError) throw rpcError
@@ -399,42 +401,81 @@ export default function ReservarPage() {
                             </div>
                         </div>
 
-                        {/* Payment Deadline Notice - Dos tarjetas visuales */}
+                        {/* Checkbox: Requiere anticipo */}
                         <div style={{ marginBottom: '2rem' }}>
-                            <h4 style={{ margin: '0 0 1rem 0', color: '#c62828', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
-                                FECHAS LÍMITE IMPORTANTES
-                            </h4>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                                {/* Tarjeta 1: Adelanto 50% */}
-                                <div style={{
-                                    background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
-                                    borderRadius: '12px',
-                                    padding: '1rem',
-                                    textAlign: 'center',
-                                    color: 'white',
-                                    boxShadow: '0 4px 12px rgba(255, 152, 0, 0.4)'
-                                }}>
-                                    <div style={{ fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>ADELANTO 50%</div>
-                                    <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.25rem' }}>Fecha Límite</div>
-                                    <div style={{ fontSize: '1.4rem', fontWeight: '900' }}>25 ENERO</div>
-                                    <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>2026</div>
+                            <label style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.75rem',
+                                padding: '1rem',
+                                background: requiresDeposit ? '#fff3e0' : '#e3f2fd',
+                                border: `2px solid ${requiresDeposit ? '#ff9800' : '#2196f3'}`,
+                                borderRadius: '12px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}>
+                                <input
+                                    type="checkbox"
+                                    checked={requiresDeposit}
+                                    onChange={(e) => setRequiresDeposit(e.target.checked)}
+                                    style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        accentColor: '#ff9800'
+                                    }}
+                                />
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontWeight: '600', color: '#333', marginBottom: '0.25rem' }}>
+                                        ¿Requiere anticipo?
+                                    </div>
+                                    <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                                        {requiresDeposit
+                                            ? 'Se solicitará un anticipo del 50% para asegurar la reservación'
+                                            : 'No se requiere anticipo. Puedes pagar el total más adelante'
+                                        }
+                                    </div>
                                 </div>
-                                {/* Tarjeta 2: Liquidar viaje */}
-                                <div style={{
-                                    background: 'linear-gradient(135deg, #e53935 0%, #c62828 100%)',
-                                    borderRadius: '12px',
-                                    padding: '1rem',
-                                    textAlign: 'center',
-                                    color: 'white',
-                                    boxShadow: '0 4px 12px rgba(229, 57, 53, 0.4)'
-                                }}>
-                                    <div style={{ fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>LIQUIDAR VIAJE</div>
-                                    <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.25rem' }}>Fecha Límite</div>
-                                    <div style={{ fontSize: '1.4rem', fontWeight: '900' }}>23 MARZO</div>
-                                    <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>2026</div>
+                            </label>
+                        </div>
+
+                        {/* Payment Deadline Notice - Solo si requiere anticipo */}
+                        {requiresDeposit && (
+                            <div style={{ marginBottom: '2rem' }}>
+                                <h4 style={{ margin: '0 0 1rem 0', color: '#c62828', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
+                                    FECHAS LÍMITE IMPORTANTES
+                                </h4>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                    {/* Tarjeta 1: Adelanto 50% */}
+                                    <div style={{
+                                        background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
+                                        borderRadius: '12px',
+                                        padding: '1rem',
+                                        textAlign: 'center',
+                                        color: 'white',
+                                        boxShadow: '0 4px 12px rgba(255, 152, 0, 0.4)'
+                                    }}>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>ADELANTO 50%</div>
+                                        <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.25rem' }}>Fecha Límite</div>
+                                        <div style={{ fontSize: '1.4rem', fontWeight: '900' }}>25 ENERO</div>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>2026</div>
+                                    </div>
+                                    {/* Tarjeta 2: Liquidar viaje */}
+                                    <div style={{
+                                        background: 'linear-gradient(135deg, #e53935 0%, #c62828 100%)',
+                                        borderRadius: '12px',
+                                        padding: '1rem',
+                                        textAlign: 'center',
+                                        color: 'white',
+                                        boxShadow: '0 4px 12px rgba(229, 57, 53, 0.4)'
+                                    }}>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>LIQUIDAR VIAJE</div>
+                                        <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.25rem' }}>Fecha Límite</div>
+                                        <div style={{ fontSize: '1.4rem', fontWeight: '900' }}>23 MARZO</div>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>2026</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         <hr style={{ margin: '1.5rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
 

@@ -1,12 +1,12 @@
 export interface Passenger {
     first_name: string
     last_name: string
-    phone?: string
-    congregation?: string
+    phone: string
+    congregation: string
     age?: number
-    observations?: string
+    observations: string
     is_infant?: boolean
-    passenger_type?: 'adult' | 'child' | 'infant'
+    passenger_type: 'adult' | 'child' | 'infant'
 }
 
 export interface ReservationData {
@@ -22,20 +22,22 @@ export interface Reservation {
     boarding_access_code?: string
     responsible_name: string
     responsible_phone: string
-    responsible_congregation?: string
+    responsible_congregation: string
     seats_total: number
     seats_payable: number
     unit_price: number
     total_amount: number
     deposit_required: number
     amount_paid: number
-    status: 'pendiente' | 'anticipo_pagado' | 'pagado_completo' | 'cancelado'
+    status: string
     seat_order?: number
     pay_by_date?: string
-    payment_method?: 'card' | 'transfer' | null
-    mp_payment_status?: 'pending' | 'approved' | 'rejected' | null
+    payment_method?: string
+    mp_payment_status?: string
     is_host?: boolean
     created_at: string
+    seat_number?: string
+    requires_deposit?: boolean
 }
 
 export interface ReservationPassenger {
@@ -62,3 +64,38 @@ export interface Payment {
     reference?: string
     note?: string
 }
+
+export interface AttractionPackage {
+    id: string
+    package_type: 'museos' | 'acuario_adultos' | 'acuario_ninos'
+    name: string
+    description: string
+    price: number
+    active: boolean
+    created_at: string
+}
+
+export interface PackageReservation {
+    id: string
+    reservation_id?: string
+    reservation_code?: string
+    responsible_name?: string
+    package_type: string
+    num_people: number
+    total_amount: number
+    amount_paid: number
+    payment_status: 'pendiente' | 'parcial' | 'pagado'
+    created_at: string
+    notes?: string
+}
+
+export interface PackagePayment {
+    id: string
+    package_reservation_id: string
+    amount: number
+    paid_at: string
+    method: string
+    reference?: string
+    note?: string
+}
+

@@ -812,11 +812,12 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                                             padding: '1rem',
                                             background: '#f8fafc',
                                             borderRadius: '12px',
-                                            border: '1px solid #f1f5f9'
+                                            border: '1px solid #f1f5f9',
+                                            gap: '0.75rem'
                                         }}
                                     >
-                                        <div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
                                                 <span style={{ fontWeight: '800', color: '#10b981', fontSize: '1.1rem' }}>
                                                     +${payment.amount.toLocaleString('es-MX')}
                                                 </span>
@@ -839,12 +840,63 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                                                 })}
                                                 {payment.reference && ` • Ref: ${payment.reference}`}
                                             </div>
+                                            {payment.note && (
+                                                <div style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic', marginTop: '0.25rem' }}>
+                                                    {payment.note}
+                                                </div>
+                                            )}
                                         </div>
-                                        {payment.note && (
-                                            <div style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic', background: 'rgba(0,0,0,0.03)', padding: '0.25rem 0.5rem', borderRadius: '4px', maxWidth: '150px', textAlign: 'right' }}>
-                                                {payment.note}
-                                            </div>
-                                        )}
+                                        <button
+                                            onClick={async () => {
+                                                try {
+                                                    // Delete payment
+                                                    const { error: deleteError } = await supabase
+                                                        .from('payments')
+                                                        .delete()
+                                                        .eq('id', payment.id)
+
+                                                    if (deleteError) throw deleteError
+
+                                                    // Recalculate amount_paid
+                                                    const newAmountPaid = reservation.amount_paid - payment.amount
+                                                    let newStatus = 'pendiente'
+
+                                                    if (newAmountPaid >= reservation.total_amount) {
+                                                        newStatus = 'pagado_completo'
+                                                    } else if (newAmountPaid >= reservation.deposit_required && reservation.deposit_required > 0) {
+                                                        newStatus = 'anticipo_pagado'
+                                                    }
+
+                                                    const { error: updateError } = await supabase
+                                                        .from('reservations')
+                                                        .update({
+                                                            amount_paid: newAmountPaid,
+                                                            status: newStatus,
+                                                        })
+                                                        .eq('id', reservation.id)
+
+                                                    if (updateError) throw updateError
+
+                                                    await checkAuthAndLoadData()
+                                                } catch (err) {
+                                                    console.error(err)
+                                                    alert('Error al eliminar el pago')
+                                                }
+                                            }}
+                                            style={{
+                                                padding: '0.5rem 0.75rem',
+                                                background: '#fee2e2',
+                                                color: '#b91c1c',
+                                                border: '1px solid #fecaca',
+                                                borderRadius: '6px',
+                                                fontSize: '0.75rem',
+                                                fontWeight: '600',
+                                                cursor: 'pointer',
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            🗑️ Eliminar
+                                        </button>
                                     </div>
                                 ))}
                             </div>

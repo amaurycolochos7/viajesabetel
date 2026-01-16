@@ -281,6 +281,21 @@ export default function AdminDashboard() {
                             {stats?.totalSeats || 0}/47
                         </span>
                     </Link>
+                    <Link
+                        href="/admin/paquetes"
+                        style={{
+                            background: '#9c27b0',
+                            color: 'white',
+                            padding: '1rem',
+                            borderRadius: '12px',
+                            textDecoration: 'none',
+                            textAlign: 'center',
+                            fontWeight: '600',
+                            boxShadow: '0 4px 6px -1px rgba(156, 39, 176, 0.2)'
+                        }}
+                    >
+                        🎟️ Paquetes de Atracciones
+                    </Link>
                 </div>
 
                 {/* Recent List - Mobile Optimized */}
