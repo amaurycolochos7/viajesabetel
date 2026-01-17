@@ -38,7 +38,7 @@ const PRICE_PER_SEAT = 1800
 export default function ModificarReservacionPage() {
     const [step, setStep] = useState<'auth' | 'edit'>('auth')
     const [reservationCode, setReservationCode] = useState('')
-    const [boardingCode, setBoardingCode] = useState('')
+    const [responsibleNameInput, setResponsibleNameInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
     const [reservation, setReservation] = useState<ReservationData | null>(null)
@@ -64,13 +64,17 @@ export default function ModificarReservacionPage() {
                 .single()
 
             if (resError || !resData) {
-                setError('Folio o teléfono no encontrado')
+                setError('Teléfono no encontrado')
                 setIsLoading(false)
                 return
             }
 
-            if (resData.boarding_access_code !== boardingCode.trim()) {
-                setError('Codigo de abordaje incorrecto')
+            // Verificar que el nombre ingresado coincida parcialmente con el responsable
+            const inputName = responsibleNameInput.trim().toLowerCase()
+            const responsibleName = (resData.responsible_name || '').toLowerCase()
+
+            if (!inputName || !responsibleName.includes(inputName)) {
+                setError('El nombre no coincide con el responsable de esta reservación')
                 setIsLoading(false)
                 return
             }
@@ -298,13 +302,13 @@ export default function ModificarReservacionPage() {
                             Modificar Reservacion
                         </h1>
                         <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.5rem', textAlign: 'center' }}>
-                            Ingresa tus codigos de acceso
+                            Ingresa tu teléfono y nombre del responsable
                         </p>
 
                         <form onSubmit={handleAuth}>
                             <div style={{ marginBottom: '1.25rem' }}>
                                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.85rem' }}>
-                                    Folio o Teléfono
+                                    Teléfono Registrado
                                 </label>
                                 <input
                                     type="text"
@@ -328,23 +332,21 @@ export default function ModificarReservacionPage() {
 
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.85rem' }}>
-                                    Codigo de Abordaje
+                                    Nombre o Apellido del Responsable
                                 </label>
                                 <input
                                     type="text"
-                                    value={boardingCode}
-                                    onChange={e => setBoardingCode(e.target.value)}
-                                    placeholder="123456"
+                                    value={responsibleNameInput}
+                                    onChange={e => setResponsibleNameInput(e.target.value)}
+                                    placeholder="Ej: Juan o Pérez"
                                     required
                                     style={{
                                         width: '100%',
                                         padding: '0.9rem',
                                         border: '2px solid #e2e8f0',
                                         borderRadius: '10px',
-                                        fontSize: '1.5rem',
+                                        fontSize: '1rem',
                                         textAlign: 'center',
-                                        fontFamily: 'monospace',
-                                        letterSpacing: '6px',
                                         background: '#f8fafc'
                                     }}
                                 />
