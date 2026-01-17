@@ -440,38 +440,36 @@ export default function ReservarPage() {
 
                         {/* Payment Deadline Notice - Solo si requiere anticipo */}
                         {requiresDeposit && (
-                            <div style={{ marginBottom: '2rem' }}>
-                                <h4 style={{ margin: '0 0 1rem 0', color: '#c62828', fontSize: '1rem', fontWeight: 'bold', textAlign: 'center' }}>
-                                    FECHAS LÍMITE IMPORTANTES
+                            <div style={{ marginBottom: '1.25rem' }}>
+                                <h4 style={{ margin: '0 0 0.5rem 0', color: '#c62828', fontSize: '0.8rem', fontWeight: 'bold', textAlign: 'center' }}>
+                                    FECHAS LÍMITE
                                 </h4>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                                     {/* Tarjeta 1: Adelanto 50% */}
                                     <div style={{
                                         background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
-                                        borderRadius: '12px',
-                                        padding: '1rem',
+                                        borderRadius: '10px',
+                                        padding: '0.5rem 0.4rem',
                                         textAlign: 'center',
                                         color: 'white',
-                                        boxShadow: '0 4px 12px rgba(255, 152, 0, 0.4)'
+                                        boxShadow: '0 3px 8px rgba(255, 152, 0, 0.3)'
                                     }}>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>ADELANTO 50%</div>
-                                        <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.25rem' }}>Fecha Límite</div>
-                                        <div style={{ fontSize: '1.4rem', fontWeight: '900' }}>25 ENERO</div>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>2026</div>
+                                        <div style={{ fontSize: '0.6rem', fontWeight: 'bold', opacity: 0.95 }}>ADELANTO 50%</div>
+                                        <div style={{ fontSize: '1rem', fontWeight: '900', lineHeight: 1.1 }}>25 ENE</div>
+                                        <div style={{ fontSize: '0.65rem', fontWeight: '600' }}>2026</div>
                                     </div>
                                     {/* Tarjeta 2: Liquidar viaje */}
                                     <div style={{
                                         background: 'linear-gradient(135deg, #e53935 0%, #c62828 100%)',
-                                        borderRadius: '12px',
-                                        padding: '1rem',
+                                        borderRadius: '10px',
+                                        padding: '0.5rem 0.4rem',
                                         textAlign: 'center',
                                         color: 'white',
-                                        boxShadow: '0 4px 12px rgba(229, 57, 53, 0.4)'
+                                        boxShadow: '0 3px 8px rgba(229, 57, 53, 0.3)'
                                     }}>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>LIQUIDAR VIAJE</div>
-                                        <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.25rem' }}>Fecha Límite</div>
-                                        <div style={{ fontSize: '1.4rem', fontWeight: '900' }}>23 MARZO</div>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>2026</div>
+                                        <div style={{ fontSize: '0.6rem', fontWeight: 'bold', opacity: 0.95 }}>LIQUIDAR VIAJE</div>
+                                        <div style={{ fontSize: '1rem', fontWeight: '900', lineHeight: 1.1 }}>23 MAR</div>
+                                        <div style={{ fontSize: '0.65rem', fontWeight: '600' }}>2026</div>
                                     </div>
                                 </div>
                             </div>
@@ -753,56 +751,38 @@ export default function ReservarPage() {
                                 </div>
                             </div>
 
-                            <div style={{ marginBottom: '2rem' }}>
-                                {/* Payment Deadline Notice - Tarjetas grandes y visuales */}
-                                <div style={{ marginBottom: '1.5rem' }}>
-                                    <h4 style={{ margin: '0 0 1rem 0', color: '#c62828', fontSize: '1.1rem', fontWeight: 'bold', textAlign: 'center' }}>
+                            <div style={{ marginBottom: '1.25rem' }}>
+                                {/* Payment Deadline Notice - Tarjetas compactas */}
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <h4 style={{ margin: '0 0 0.5rem 0', color: '#c62828', fontSize: '0.85rem', fontWeight: 'bold', textAlign: 'center' }}>
                                         FECHAS LÍMITE DE PAGO
                                     </h4>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                                         {/* Tarjeta 1: Adelanto 50% */}
                                         <div style={{
                                             background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
-                                            borderRadius: '16px',
-                                            padding: '1.25rem 1rem',
+                                            borderRadius: '10px',
+                                            padding: '0.6rem 0.5rem',
                                             textAlign: 'center',
                                             color: 'white',
-                                            boxShadow: '0 6px 20px rgba(255, 152, 0, 0.35)'
+                                            boxShadow: '0 3px 10px rgba(255, 152, 0, 0.3)'
                                         }}>
-
-                                            <div style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                                                ADELANTO 50%
-                                            </div>
-                                            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.5rem' }}>
-                                                Fecha Límite
-                                            </div>
-                                            <div style={{ fontSize: '1.75rem', fontWeight: '900', lineHeight: 1 }}>25 ENERO</div>
-                                            <div style={{ fontSize: '1rem', fontWeight: '600', marginTop: '0.25rem' }}>2026</div>
-                                            <div style={{ fontSize: '0.7rem', marginTop: '0.5rem', opacity: 0.85 }}>
-                                                Para asegurar tu lugar
-                                            </div>
+                                            <div style={{ fontSize: '0.65rem', fontWeight: 'bold', opacity: 0.95 }}>ADELANTO 50%</div>
+                                            <div style={{ fontSize: '1.1rem', fontWeight: '900', lineHeight: 1.1 }}>25 ENE</div>
+                                            <div style={{ fontSize: '0.7rem', fontWeight: '600' }}>2026</div>
                                         </div>
                                         {/* Tarjeta 2: Liquidar viaje */}
                                         <div style={{
                                             background: 'linear-gradient(135deg, #e53935 0%, #b71c1c 100%)',
-                                            borderRadius: '16px',
-                                            padding: '1.25rem 1rem',
+                                            borderRadius: '10px',
+                                            padding: '0.6rem 0.5rem',
                                             textAlign: 'center',
                                             color: 'white',
-                                            boxShadow: '0 6px 20px rgba(229, 57, 53, 0.35)'
+                                            boxShadow: '0 3px 10px rgba(229, 57, 53, 0.3)'
                                         }}>
-
-                                            <div style={{ fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
-                                                LIQUIDAR VIAJE
-                                            </div>
-                                            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.9, letterSpacing: '1px', marginBottom: '0.5rem' }}>
-                                                Fecha Límite
-                                            </div>
-                                            <div style={{ fontSize: '1.75rem', fontWeight: '900', lineHeight: 1 }}>23 MARZO</div>
-                                            <div style={{ fontSize: '1rem', fontWeight: '600', marginTop: '0.25rem' }}>2026</div>
-                                            <div style={{ fontSize: '0.7rem', marginTop: '0.5rem', opacity: 0.85 }}>
-                                                Para tener todo listo
-                                            </div>
+                                            <div style={{ fontSize: '0.65rem', fontWeight: 'bold', opacity: 0.95 }}>LIQUIDAR VIAJE</div>
+                                            <div style={{ fontSize: '1.1rem', fontWeight: '900', lineHeight: 1.1 }}>23 MAR</div>
+                                            <div style={{ fontSize: '0.7rem', fontWeight: '600' }}>2026</div>
                                         </div>
                                     </div>
                                 </div>

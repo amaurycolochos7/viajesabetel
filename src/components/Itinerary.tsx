@@ -30,7 +30,8 @@ export default function Itinerary() {
                 { time: '8:00 - 8:45 AM', desc: 'Arreglarse para entrar a Betel' },
                 { time: '8:45 AM', desc: 'Inicia el primer recorrido a Betel' },
                 { time: '1:00 PM', desc: 'Concluyen recorridos, Y cambios de ropa' },
-                { time: '1:00 - 7:00 PM', desc: 'Viaje a Aztlán y Comida' },
+                { time: '1:00 - 3:00 PM', desc: 'Salida rumbo a Puebla' },
+                { time: '3:00 - 7:00 PM', desc: 'Tiempo libre en Puebla y Comida' },
                 { time: '7:00 - 10:00 PM', desc: 'Cena' },
                 { time: '10:00 PM', desc: 'Salida rumbo a Veracruz' },
             ]

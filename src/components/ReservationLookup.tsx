@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { supabaseAttractions } from '@/lib/supabase-attractions'
 import html2canvas from 'html2canvas'
 
 interface ReservationInfo {
@@ -35,6 +36,17 @@ interface ReservationInfo {
     }[]
 }
 
+interface AttractionPackage {
+    id: string
+    package_name: string
+    adults_count: number
+    children_count: number
+    total_amount: number
+    amount_paid: number
+    payment_status: string
+    created_at: string
+}
+
 // Icons
 const SearchIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
@@ -51,6 +63,7 @@ export default function ReservationLookup() {
     const [reservationCode, setReservationCode] = useState('')
     const [isSearching, setIsSearching] = useState(false)
     const [reservation, setReservation] = useState<ReservationInfo | null>(null)
+    const [attractionPackages, setAttractionPackages] = useState<AttractionPackage[]>([])
     const [error, setError] = useState('')
     const [showSeatMapModal, setShowSeatMapModal] = useState(false)
 
@@ -109,6 +122,24 @@ export default function ReservationLookup() {
                 .eq('reservation_id', resData.id)
                 .order('created_at', { ascending: false })
 
+            // Buscar paquetes de atracciones asociados al teléfono
+            try {
+                const { data: packagesData } = await supabaseAttractions
+                    .from('package_reservations')
+                    .select('*')
+                    .eq('responsible_phone', resData.responsible_phone)
+                    .order('created_at', { ascending: false })
+
+                if (packagesData && packagesData.length > 0) {
+                    setAttractionPackages(packagesData)
+                } else {
+                    setAttractionPackages([])
+                }
+            } catch (pkgErr) {
+                console.log('No se encontraron paquetes de atracciones')
+                setAttractionPackages([])
+            }
+
             setReservation({
                 ...resData,
                 passengers: passengersData || [],
@@ -141,6 +172,7 @@ export default function ReservationLookup() {
         setMode('buttons')
         setReservationCode('')
         setReservation(null)
+        setAttractionPackages([])
         setError('')
     }
 
@@ -597,6 +629,63 @@ export default function ReservationLookup() {
                             </div>
                         )
                     }
+
+                    {/* Paquetes de Atracciones */}
+                    {attractionPackages.length > 0 && (
+                        <div style={{ marginBottom: '1rem' }}>
+                            <h3 style={{ fontSize: '0.75rem', fontWeight: '600', marginBottom: '0.5rem', color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                🎟️ Paquetes de Atracciones
+                            </h3>
+                            <div style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%)', border: '2px solid #f59e0b', borderRadius: '12px', overflow: 'hidden' }}>
+                                {attractionPackages.map((pkg, idx) => (
+                                    <div
+                                        key={idx}
+                                        style={{
+                                            padding: '0.85rem',
+                                            borderBottom: idx < attractionPackages.length - 1 ? '1px solid #fcd34d' : 'none',
+                                            background: idx % 2 === 0 ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)'
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                                            <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '0.95rem' }}>
+                                                {pkg.package_name}
+                                            </div>
+                                            <span style={{
+                                                fontSize: '0.7rem',
+                                                padding: '0.25rem 0.6rem',
+                                                borderRadius: '6px',
+                                                fontWeight: '600',
+                                                background: pkg.payment_status === 'pagado' ? '#dcfce7' : '#fef3c7',
+                                                color: pkg.payment_status === 'pagado' ? '#166534' : '#92400e',
+                                                border: pkg.payment_status === 'pagado' ? '1px solid #86efac' : '1px solid #fcd34d'
+                                            }}>
+                                                {pkg.payment_status === 'pagado' ? '✓ Pagado' : '⏳ Pendiente'}
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#64748b', marginBottom: '0.35rem' }}>
+                                            <span>👥 {pkg.adults_count} adultos, {pkg.children_count} niños</span>
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginTop: '0.5rem', background: 'rgba(255,255,255,0.7)', padding: '0.5rem', borderRadius: '6px' }}>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '0.6rem', color: '#78909c', textTransform: 'uppercase' }}>Total</div>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#1e293b' }}>${pkg.total_amount.toLocaleString()}</div>
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '0.6rem', color: '#78909c', textTransform: 'uppercase' }}>Pagado</div>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#2e7d32' }}>${pkg.amount_paid.toLocaleString()}</div>
+                                            </div>
+                                            <div style={{ textAlign: 'center' }}>
+                                                <div style={{ fontSize: '0.6rem', color: '#78909c', textTransform: 'uppercase' }}>Pendiente</div>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: '700', color: (pkg.total_amount - pkg.amount_paid) > 0 ? '#e53935' : '#2e7d32' }}>
+                                                    ${(pkg.total_amount - pkg.amount_paid).toLocaleString()}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Resumen de Pagos - Compacto */}
                     <div style={{ marginBottom: '1rem' }}>
