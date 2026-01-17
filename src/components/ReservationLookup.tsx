@@ -81,15 +81,17 @@ export default function ReservationLookup() {
         setReservation(null)
 
         try {
-            // Find reservation
+            // Find reservation by code OR phone
+            const searchValue = reservationCode.trim()
             const { data: resData, error: resError } = await supabase
                 .from('reservations')
                 .select('*')
-                .ilike('reservation_code', `%${reservationCode.trim()}%`)
+                .or(`reservation_code.ilike.%${searchValue}%,responsible_phone.ilike.%${searchValue}%`)
+                .limit(1)
                 .single()
 
             if (resError || !resData) {
-                setError('No se encontró una reservación con ese código')
+                setError('No se encontró una reservación con ese folio o teléfono')
                 setIsSearching(false)
                 return
             }
@@ -294,10 +296,10 @@ export default function ReservationLookup() {
             {!reservation && (
                 <form onSubmit={handleSearch}>
                     <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                        <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#546e7a' }}>Código de Reservación</label>
+                        <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#546e7a' }}>Folio de Reservación o Teléfono</label>
                         <input
                             type="text"
-                            placeholder="Ej: BETEL-A1B2-9482"
+                            placeholder="Ej: BETEL-A1B2 o 9611234567"
                             value={reservationCode}
                             onChange={(e) => setReservationCode(e.target.value.toUpperCase())}
                             style={{

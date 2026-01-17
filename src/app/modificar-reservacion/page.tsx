@@ -55,14 +55,16 @@ export default function ModificarReservacionPage() {
         setError('')
 
         try {
+            const searchValue = reservationCode.trim()
             const { data: resData, error: resError } = await supabase
                 .from('reservations')
                 .select('*')
-                .ilike('reservation_code', reservationCode.trim())
+                .or(`reservation_code.ilike.%${searchValue}%,responsible_phone.ilike.%${searchValue}%`)
+                .limit(1)
                 .single()
 
             if (resError || !resData) {
-                setError('Codigo de reservacion no encontrado')
+                setError('Folio o teléfono no encontrado')
                 setIsLoading(false)
                 return
             }
@@ -302,13 +304,13 @@ export default function ModificarReservacionPage() {
                         <form onSubmit={handleAuth}>
                             <div style={{ marginBottom: '1.25rem' }}>
                                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#374151', fontSize: '0.85rem' }}>
-                                    Codigo de Reservacion
+                                    Folio o Teléfono
                                 </label>
                                 <input
                                     type="text"
                                     value={reservationCode}
                                     onChange={e => setReservationCode(e.target.value.toUpperCase())}
-                                    placeholder="BETEL-2026-XXXXXX"
+                                    placeholder="BETEL-XXXX o 9611234567"
                                     required
                                     style={{
                                         width: '100%',

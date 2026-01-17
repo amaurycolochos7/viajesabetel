@@ -38,15 +38,17 @@ export default function MiGrupoPage() {
         setPassengers([])
 
         try {
-            // Find reservation
+            // Find reservation by code OR phone
+            const searchValue = reservationCode.trim()
             const { data: reservation, error: resError } = await supabase
                 .from('reservations')
                 .select('id, reservation_code')
-                .ilike('reservation_code', `%${reservationCode.trim()}%`)
+                .or(`reservation_code.ilike.%${searchValue}%,responsible_phone.ilike.%${searchValue}%`)
+                .limit(1)
                 .single()
 
             if (resError || !reservation) {
-                setError('No se encontró una reservación con ese código')
+                setError('No se encontró una reservación con ese folio o teléfono')
                 setIsSearching(false)
                 return
             }
@@ -152,7 +154,7 @@ export default function MiGrupoPage() {
                         </ul>
                     </div>
                     <p style={{ color: '#78909c', marginBottom: '1rem', fontSize: '0.85rem' }}>
-                        Ingresa tu código de reservación (aparece en la imagen que descargaste al confirmar: BETEL-2026-XXXXXX)
+                        Ingresa tu folio de reservación o número de teléfono del responsable
                     </p>
 
                     <form onSubmit={handleSearch}>
@@ -160,7 +162,7 @@ export default function MiGrupoPage() {
                             <input
                                 type="text"
                                 className="form-input"
-                                placeholder="Ej: BETEL-2026-000001"
+                                placeholder="Ej: BETEL-2026-XXXX o 9611234567"
                                 value={reservationCode}
                                 onChange={(e) => setReservationCode(e.target.value.toUpperCase())}
                                 style={{ textAlign: 'center', fontSize: '1.1rem', letterSpacing: '1px' }}

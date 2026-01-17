@@ -94,14 +94,16 @@ export default function ExtraActivities() {
         setError('')
 
         try {
+            const searchValue = reservationCode.trim()
             const { data, error: fetchError } = await supabase
                 .from('reservations')
                 .select('id, reservation_code, responsible_name')
-                .ilike('reservation_code', `%${reservationCode.trim()}%`)
+                .or(`reservation_code.ilike.%${searchValue}%,responsible_phone.ilike.%${searchValue}%`)
+                .limit(1)
                 .single()
 
             if (fetchError || !data) {
-                setError('No encontramos tu reservacion. Verifica el codigo.')
+                setError('No encontramos tu reservacion. Verifica el folio o teléfono.')
                 setIsLoading(false)
                 return
             }
@@ -375,13 +377,13 @@ export default function ExtraActivities() {
                                 {step === 'lookup' && (
                                     <div>
                                         <p style={{ margin: '0 0 1rem', color: '#555', fontSize: '0.9rem', textAlign: 'center' }}>
-                                            Ingresa tu codigo de reservacion de Betel
+                                            Ingresa tu folio de reservación o número de teléfono
                                         </p>
                                         <input
                                             type="text"
                                             value={reservationCode}
                                             onChange={(e) => setReservationCode(e.target.value.toUpperCase())}
-                                            placeholder="Ej: BETEL-XXXX-XXXX"
+                                            placeholder="Ej: BETEL-XXXX o 9611234567"
                                             style={{
                                                 width: '100%',
                                                 padding: '0.85rem',

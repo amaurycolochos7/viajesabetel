@@ -93,14 +93,16 @@ function BuyTicketsContent() {
         setError('')
 
         try {
+            const searchValue = reservationCode.trim()
             const { data, error } = await supabase
                 .from('reservations')
                 .select('id, reservation_code, responsible_name, seats_total')
-                .ilike('reservation_code', `%${reservationCode.trim()}%`)
+                .or(`reservation_code.ilike.%${searchValue}%,responsible_phone.ilike.%${searchValue}%`)
+                .limit(1)
                 .single()
 
             if (error || !data) {
-                setError('No encontramos tu reservación. Verifica el código.')
+                setError('No encontramos tu reservación. Verifica el folio o teléfono.')
                 setIsLoading(false)
                 return
             }
@@ -342,11 +344,11 @@ function BuyTicketsContent() {
                     {step === 'lookup' && (
                         <form onSubmit={handleLookup}>
                             <p style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#546e7a' }}>
-                                Ingresa tu código de reservación para comenzar.
+                                Ingresa tu folio de reservación o número de teléfono
                             </p>
                             <input
                                 type="text"
-                                placeholder="Ej: BETEL-XXXX-XXXX"
+                                placeholder="Ej: BETEL-XXXX o 9611234567"
                                 value={reservationCode}
                                 onChange={(e) => setReservationCode(e.target.value.toUpperCase())}
                                 style={{
