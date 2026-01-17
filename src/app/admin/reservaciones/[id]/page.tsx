@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { supabaseAttractions } from '@/lib/supabase-attractions'
 import { Reservation, ReservationPassenger, Payment } from '@/types'
 
 interface TicketOrder {
@@ -15,6 +16,18 @@ interface TicketOrder {
     created_at: string
 }
 
+interface AttractionReservation {
+    id: string
+    package_type: string
+    responsible_name: string
+    num_people: number
+    total_amount: number
+    reservation_code: string
+    payment_status: string
+    notes: string | null
+    created_at: string
+}
+
 export default function ReservacionDetailPage() {
     const router = useRouter()
     const params = useParams()
@@ -22,6 +35,7 @@ export default function ReservacionDetailPage() {
     const [passengers, setPassengers] = useState<ReservationPassenger[]>([])
     const [payments, setPayments] = useState<Payment[]>([])
     const [ticketOrders, setTicketOrders] = useState<TicketOrder[]>([])
+    const [attractionReservations, setAttractionReservations] = useState<AttractionReservation[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
     const [paymentAmount, setPaymentAmount] = useState('')
@@ -103,6 +117,21 @@ export default function ReservacionDetailPage() {
 
         if (ticketsData) {
             setTicketOrders(ticketsData)
+        }
+
+        // Cargar reservaciones de atracciones desde BD separada
+        try {
+            const { data: attractionsData } = await supabaseAttractions
+                .from('package_reservations')
+                .select('*')
+                .ilike('notes', `%${reservationData.reservation_code}%`)
+                .order('created_at', { ascending: false })
+
+            if (attractionsData) {
+                setAttractionReservations(attractionsData)
+            }
+        } catch (err) {
+            console.error('Error cargando atracciones:', err)
         }
 
         // Load all occupied seats globally
@@ -788,6 +817,65 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                                         )}
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Paquetes de Atracciones (Museos/Acuario) */}
+                    {attractionReservations.length > 0 && (
+                        <div style={{ background: 'white', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02)' }}>
+                            <h2 style={{ fontWeight: '700', marginBottom: '1.25rem', fontSize: '1.1rem', color: '#1e293b' }}>
+                                Paquetes de Atracciones (Museos/Acuario)
+                            </h2>
+                            <div style={{ display: 'grid', gap: '1rem' }}>
+                                {attractionReservations.map(attr => {
+                                    const packageLabels: Record<string, string> = {
+                                        'museos': 'Paquete Museos',
+                                        'acuario_adultos': 'Acuario + Museos (Adultos)',
+                                        'acuario_ninos': 'Acuario + Museos (Ninos)'
+                                    }
+                                    return (
+                                        <div key={attr.id} style={{
+                                            border: '1px solid #e2e8f0',
+                                            borderRadius: '12px',
+                                            padding: '1rem',
+                                            background: attr.payment_status === 'pagado' ? '#f0fdf4' : '#fffbeb'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                                                <div>
+                                                    <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155' }}>
+                                                        {packageLabels[attr.package_type] || attr.package_type}
+                                                    </div>
+                                                    <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                                        Codigo: {attr.reservation_code}
+                                                    </div>
+                                                </div>
+                                                <span style={{
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: '700',
+                                                    textTransform: 'uppercase',
+                                                    padding: '0.2rem 0.5rem',
+                                                    borderRadius: '4px',
+                                                    background: attr.payment_status === 'pagado' ? '#dcfce7' : attr.payment_status === 'parcial' ? '#fef3c7' : '#fee2e2',
+                                                    color: attr.payment_status === 'pagado' ? '#166534' : attr.payment_status === 'parcial' ? '#d97706' : '#dc2626'
+                                                }}>
+                                                    {attr.payment_status}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem', background: 'white', borderRadius: '8px', border: '1px dashed #e2e8f0' }}>
+                                                <span style={{ fontSize: '0.85rem', color: '#475569' }}>
+                                                    {attr.num_people} persona(s)
+                                                </span>
+                                                <span style={{ fontSize: '1.1rem', fontWeight: '800', color: '#10b981' }}>
+                                                    ${attr.total_amount.toLocaleString('es-MX')}
+                                                </span>
+                                            </div>
+                                            <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+                                                {new Date(attr.created_at).toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </div>
                     )}

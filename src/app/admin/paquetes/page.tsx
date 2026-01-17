@@ -9,6 +9,26 @@ import { PackageReservation, AttractionPackage } from '@/types'
 
 type FilterType = 'todos' | 'museos' | 'acuario_adultos' | 'acuario_ninos' | 'pendientes' | 'pagados'
 
+// Interface para items consolidados por tipo de paquete
+interface ConsolidatedItem {
+    packageType: string
+    numPeople: number
+    totalAmount: number
+    amountPaid: number
+    originalItems: PackageReservation[] // Para acceder a los IDs originales
+}
+
+// Interface para reservaciones agrupadas por código de viaje
+interface GroupedReservation {
+    betelCode: string
+    responsibleName: string
+    consolidatedItems: ConsolidatedItem[]
+    totalAmount: number
+    totalPaid: number
+    totalPending: number
+    paymentStatus: 'pagado' | 'parcial' | 'pendiente'
+}
+
 export default function PaquetesAdminPage() {
     const router = useRouter()
     const [packages, setPackages] = useState<AttractionPackage[]>([])
@@ -108,6 +128,94 @@ export default function PaquetesAdminPage() {
 
         setFilteredReservations(filtered)
     }
+
+    // Extraer código Betel de las notas
+    const extractBetelCode = (notes: string | null): string => {
+        if (!notes) return 'SIN_CODIGO'
+        const match = notes.match(/Reservacion Betel:\s*(BETEL-[A-Z0-9-]+)/i)
+        return match ? match[1] : 'SIN_CODIGO'
+    }
+
+    // Agrupar reservaciones por código de viaje Betel Y consolidar por tipo de paquete
+    const groupReservationsByBetelCode = (reservations: PackageReservation[]): GroupedReservation[] => {
+        const groups: Record<string, {
+            betelCode: string
+            responsibleName: string
+            itemsByType: Record<string, { items: PackageReservation[], numPeople: number, totalAmount: number, amountPaid: number }>
+            totalAmount: number
+            totalPaid: number
+        }> = {}
+
+        reservations.forEach(r => {
+            const betelCode = extractBetelCode((r as any).notes)
+            const key = betelCode + '_' + ((r as any).responsible_name || 'unknown')
+
+            if (!groups[key]) {
+                groups[key] = {
+                    betelCode,
+                    responsibleName: (r as any).responsible_name || 'Sin nombre',
+                    itemsByType: {},
+                    totalAmount: 0,
+                    totalPaid: 0
+                }
+            }
+
+            // Consolidar por tipo de paquete
+            if (!groups[key].itemsByType[r.package_type]) {
+                groups[key].itemsByType[r.package_type] = {
+                    items: [],
+                    numPeople: 0,
+                    totalAmount: 0,
+                    amountPaid: 0
+                }
+            }
+
+            groups[key].itemsByType[r.package_type].items.push(r)
+            groups[key].itemsByType[r.package_type].numPeople += r.num_people
+            groups[key].itemsByType[r.package_type].totalAmount += r.total_amount
+            groups[key].itemsByType[r.package_type].amountPaid += r.amount_paid
+            groups[key].totalAmount += r.total_amount
+            groups[key].totalPaid += r.amount_paid
+        })
+
+        // Convertir a la estructura final
+        const result: GroupedReservation[] = Object.values(groups).map(g => {
+            const consolidatedItems: ConsolidatedItem[] = Object.entries(g.itemsByType).map(([packageType, data]) => ({
+                packageType,
+                numPeople: data.numPeople,
+                totalAmount: data.totalAmount,
+                amountPaid: data.amountPaid,
+                originalItems: data.items
+            }))
+
+            const totalPending = g.totalAmount - g.totalPaid
+            let paymentStatus: 'pagado' | 'parcial' | 'pendiente' = 'pendiente'
+            if (g.totalPaid >= g.totalAmount) {
+                paymentStatus = 'pagado'
+            } else if (g.totalPaid > 0) {
+                paymentStatus = 'parcial'
+            }
+
+            return {
+                betelCode: g.betelCode,
+                responsibleName: g.responsibleName,
+                consolidatedItems,
+                totalAmount: g.totalAmount,
+                totalPaid: g.totalPaid,
+                totalPending,
+                paymentStatus
+            }
+        })
+
+        // Ordenar por fecha más reciente
+        return result.sort((a, b) => {
+            const aDate = a.consolidatedItems[0]?.originalItems[0]?.created_at || ''
+            const bDate = b.consolidatedItems[0]?.originalItems[0]?.created_at || ''
+            return bDate.localeCompare(aDate)
+        })
+    }
+
+    const groupedReservations = groupReservationsByBetelCode(filteredReservations)
 
     const getPackageColor = (packageType: string) => {
         const colors: Record<string, string> = {
@@ -339,109 +447,183 @@ export default function PaquetesAdminPage() {
                     ))}
                 </div>
 
-                {/* Package Reservations List */}
-                {filteredReservations.length === 0 ? (
+                {/* Package Reservations List - AGRUPADO */}
+                {groupedReservations.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '3rem', background: 'white', borderRadius: '12px' }}>
                         <p style={{ color: '#94a3b8', margin: 0 }}>No hay reservaciones de paquetes</p>
                     </div>
                 ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {filteredReservations.map((pr) => (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {groupedReservations.map((group, idx) => (
                             <div
-                                key={pr.id}
+                                key={group.betelCode + idx}
                                 style={{
                                     background: 'white',
-                                    padding: '1rem',
                                     borderRadius: '12px',
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                                    borderLeft: `4px solid ${getPackageColor(pr.package_type)}`
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                                    overflow: 'hidden'
                                 }}
                             >
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.75rem' }}>
-                                    <div>
-                                        <div style={{ fontWeight: '700', color: getPackageColor(pr.package_type), fontSize: '0.95rem' }}>
-                                            {getPackageName(pr.package_type)}
-                                        </div>
-                                        {(pr as any).responsible_name && (
-                                            <div style={{ fontSize: '0.8rem', color: '#333', marginTop: '0.25rem', fontWeight: '500' }}>
-                                                {(pr as any).responsible_name}
+                                {/* Header de la tarjeta agrupada */}
+                                <div style={{
+                                    background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)',
+                                    padding: '1rem',
+                                    color: 'white'
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                        <div>
+                                            <div style={{ fontWeight: '700', fontSize: '1rem' }}>
+                                                {group.responsibleName}
                                             </div>
-                                        )}
-                                        {(pr as any).reservation_code && (
-                                            <div style={{ fontSize: '0.7rem', color: '#3b82f6', marginTop: '0.15rem', fontFamily: 'monospace' }}>
-                                                {(pr as any).reservation_code}
+                                            <div style={{
+                                                fontSize: '0.75rem',
+                                                opacity: 0.85,
+                                                fontFamily: 'monospace',
+                                                marginTop: '0.25rem'
+                                            }}>
+                                                {group.betelCode !== 'SIN_CODIGO' ? group.betelCode : 'Sin codigo Betel'}
                                             </div>
-                                        )}
-                                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.25rem' }}>
-                                            {pr.num_people} persona{pr.num_people !== 1 ? 's' : ''}
                                         </div>
+                                        <span style={{
+                                            fontSize: '0.7rem',
+                                            padding: '4px 10px',
+                                            borderRadius: '12px',
+                                            fontWeight: '700',
+                                            textTransform: 'uppercase',
+                                            background: group.paymentStatus === 'pagado' ? '#22c55e' :
+                                                group.paymentStatus === 'parcial' ? '#f59e0b' : 'rgba(255,255,255,0.2)',
+                                            color: 'white'
+                                        }}>
+                                            {getStatusLabel(group.paymentStatus)}
+                                        </span>
                                     </div>
-                                    <span style={{
+                                </div>
+
+                                {/* Lista de paquetes dentro del grupo */}
+                                <div style={{ padding: '1rem' }}>
+                                    <div style={{
                                         fontSize: '0.75rem',
-                                        padding: '4px 8px',
-                                        borderRadius: '10px',
                                         fontWeight: '600',
-                                        background: pr.payment_status === 'pagado' ? '#dcfce7' : pr.payment_status === 'parcial' ? '#fef3c7' : '#f1f5f9',
-                                        color: pr.payment_status === 'pagado' ? '#166534' : pr.payment_status === 'parcial' ? '#92400e' : '#475569'
+                                        color: '#64748b',
+                                        marginBottom: '0.5rem',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.5px'
                                     }}>
-                                        {getStatusLabel(pr.payment_status)}
-                                    </span>
-                                </div>
+                                        Paquetes Reservados ({group.consolidatedItems.length})
+                                    </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
-                                    <div>
-                                        <span style={{ color: '#94a3b8' }}>Personas:</span>{' '}
-                                        <strong>{pr.num_people}</strong>
-                                    </div>
-                                    <div>
-                                        <span style={{ color: '#94a3b8' }}>Total:</span>{' '}
-                                        <strong>${formatMoney(pr.total_amount)}</strong>
-                                    </div>
-                                    <div>
-                                        <span style={{ color: '#94a3b8' }}>Pagado:</span>{' '}
-                                        <strong style={{ color: '#2e7d32' }}>${formatMoney(pr.amount_paid)}</strong>
-                                    </div>
-                                    <div>
-                                        <span style={{ color: '#94a3b8' }}>Pendiente:</span>{' '}
-                                        <strong style={{ color: '#c62828' }}>${formatMoney(pr.total_amount - pr.amount_paid)}</strong>
-                                    </div>
-                                </div>
+                                    {group.consolidatedItems.map((item: ConsolidatedItem) => (
+                                        <div
+                                            key={item.packageType}
+                                            style={{
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                padding: '0.6rem 0.75rem',
+                                                marginBottom: '0.5rem',
+                                                background: '#f8fafc',
+                                                borderRadius: '8px',
+                                                borderLeft: `3px solid ${getPackageColor(item.packageType)}`
+                                            }}
+                                        >
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{
+                                                    fontWeight: '600',
+                                                    color: getPackageColor(item.packageType),
+                                                    fontSize: '0.85rem'
+                                                }}>
+                                                    {getPackageName(item.packageType)}
+                                                </div>
+                                                <div style={{
+                                                    fontSize: '0.75rem',
+                                                    color: '#64748b',
+                                                    marginTop: '0.2rem'
+                                                }}>
+                                                    {item.numPeople} persona{item.numPeople !== 1 ? 's' : ''}
+                                                </div>
+                                            </div>
+                                            <div style={{ textAlign: 'right' }}>
+                                                <div style={{ fontWeight: '700', color: '#1e293b' }}>
+                                                    ${formatMoney(item.totalAmount)}
+                                                </div>
+                                                {item.amountPaid > 0 && (
+                                                    <div style={{ fontSize: '0.7rem', color: '#22c55e' }}>
+                                                        Pagado: ${formatMoney(item.amountPaid)}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    // Seleccionar el primer item original para pago
+                                                    if (item.originalItems.length > 0) {
+                                                        setSelectedReservation(item.originalItems[0])
+                                                        setShowPaymentModal(true)
+                                                    }
+                                                }}
+                                                style={{
+                                                    marginLeft: '0.5rem',
+                                                    padding: '0.4rem 0.6rem',
+                                                    background: '#3b82f6',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.7rem',
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Registrar pago"
+                                            >
+                                                Pagar
+                                            </button>
+                                            <button
+                                                onClick={() => deleteReservation(item.originalItems[0].id)}
+                                                style={{
+                                                    marginLeft: '0.25rem',
+                                                    padding: '0.4rem 0.5rem',
+                                                    background: '#fee2e2',
+                                                    color: '#dc2626',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.7rem',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Eliminar"
+                                            >
+                                                X
+                                            </button>
+                                        </div>
+                                    ))}
 
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <button
-                                        onClick={() => {
-                                            setSelectedReservation(pr)
-                                            setShowPaymentModal(true)
-                                        }}
-                                        style={{
-                                            flex: 1,
-                                            padding: '0.5rem',
-                                            background: '#3b82f6',
-                                            color: 'white',
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            fontWeight: '600',
-                                            fontSize: '0.85rem',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Registrar Pago
-                                    </button>
-                                    <button
-                                        onClick={() => deleteReservation(pr.id)}
-                                        style={{
-                                            padding: '0.5rem 0.75rem',
-                                            background: '#ffebee',
-                                            color: '#c62828',
-                                            border: '1px solid #ef9a9a',
-                                            borderRadius: '8px',
-                                            fontWeight: '600',
-                                            fontSize: '0.85rem',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        Eliminar
-                                    </button>
+                                    {/* Totales del grupo */}
+                                    <div style={{
+                                        marginTop: '0.75rem',
+                                        padding: '0.75rem',
+                                        background: '#f1f5f9',
+                                        borderRadius: '8px',
+                                        display: 'grid',
+                                        gridTemplateColumns: '1fr 1fr 1fr',
+                                        gap: '0.5rem',
+                                        textAlign: 'center'
+                                    }}>
+                                        <div>
+                                            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Total</div>
+                                            <div style={{ fontWeight: '700', color: '#1e293b' }}>
+                                                ${formatMoney(group.totalAmount)}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Pagado</div>
+                                            <div style={{ fontWeight: '700', color: '#22c55e' }}>
+                                                ${formatMoney(group.totalPaid)}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Pendiente</div>
+                                            <div style={{ fontWeight: '700', color: group.totalPending > 0 ? '#dc2626' : '#22c55e' }}>
+                                                ${formatMoney(group.totalPending)}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -956,15 +1138,30 @@ function PaymentModal({ packageReservation, onClose }: { packageReservation: Pac
         setError('')
 
         try {
-            const { error: rpcError } = await supabase.rpc('register_package_payment', {
-                p_package_reservation_id: packageReservation.id,
-                p_amount: amountNum,
-                p_method: method,
-                p_reference: reference || null,
-                p_note: note || null
-            })
+            // Calcular nuevo monto pagado
+            const newAmountPaid = packageReservation.amount_paid + amountNum
 
-            if (rpcError) throw rpcError
+            // Determinar nuevo status
+            let newStatus: 'pendiente' | 'parcial' | 'pagado' = 'pendiente'
+            if (newAmountPaid >= packageReservation.total_amount) {
+                newStatus = 'pagado'
+            } else if (newAmountPaid > 0) {
+                newStatus = 'parcial'
+            }
+
+            // Actualizar directamente en la BD de atracciones
+            const { error: updateError } = await supabaseAttractions
+                .from('package_reservations')
+                .update({
+                    amount_paid: newAmountPaid,
+                    payment_status: newStatus,
+                    notes: packageReservation.notes
+                        ? `${packageReservation.notes}\n[Pago ${new Date().toLocaleDateString('es-MX')}: $${amountNum} - ${method}${reference ? ' - Ref: ' + reference : ''}${note ? ' - ' + note : ''}]`
+                        : `[Pago ${new Date().toLocaleDateString('es-MX')}: $${amountNum} - ${method}${reference ? ' - Ref: ' + reference : ''}${note ? ' - ' + note : ''}]`
+                })
+                .eq('id', packageReservation.id)
+
+            if (updateError) throw updateError
 
             onClose()
         } catch (err) {

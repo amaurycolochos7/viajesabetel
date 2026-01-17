@@ -144,7 +144,7 @@ export default function ReservationLookup() {
 
     if (mode === 'buttons') {
         return (
-            <section className="card" style={{ marginBottom: '1rem', padding: '1.5rem' }}>
+            <section className="card" style={{ marginTop: '2rem', marginBottom: '1rem', padding: '1.5rem' }}>
                 <h2 style={{
                     fontSize: '1.1rem',
                     fontWeight: '600',
