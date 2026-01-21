@@ -38,7 +38,9 @@ export default function PaquetesAdminPage() {
     const [filter, setFilter] = useState<FilterType>('todos')
     const [showNewModal, setShowNewModal] = useState(false)
     const [showPaymentModal, setShowPaymentModal] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false)
     const [selectedReservation, setSelectedReservation] = useState<PackageReservation | null>(null)
+    const [selectedConsolidatedItem, setSelectedConsolidatedItem] = useState<ConsolidatedItem | null>(null)
 
     useEffect(() => {
         checkAuthAndLoadData()
@@ -265,6 +267,73 @@ export default function PaquetesAdminPage() {
             }
         } catch (e) {
             console.error('Error deleting:', e)
+        }
+    }
+
+    // Consolidar múltiples registros duplicados en uno solo
+    const consolidateRecords = async (items: PackageReservation[]) => {
+        if (items.length <= 1) {
+            alert('Solo hay 1 registro, no es necesario consolidar')
+            return
+        }
+
+        if (!confirm(`¿Consolidar ${items.length} registros en 1? Esto sumará todas las personas y montos.`)) return
+
+        try {
+            const totalPeople = items.reduce((sum, i) => sum + i.num_people, 0)
+            const totalAmount = items.reduce((sum, i) => sum + i.total_amount, 0)
+            const totalPaid = items.reduce((sum, i) => sum + i.amount_paid, 0)
+
+            // Actualizar el primer registro con los totales
+            const { error: updateError } = await supabaseAttractions
+                .from('package_reservations')
+                .update({
+                    num_people: totalPeople,
+                    total_amount: totalAmount,
+                    amount_paid: totalPaid,
+                    payment_status: totalPaid >= totalAmount ? 'pagado' : totalPaid > 0 ? 'parcial' : 'pendiente'
+                })
+                .eq('id', items[0].id)
+
+            if (updateError) throw updateError
+
+            // Eliminar los registros restantes
+            for (let i = 1; i < items.length; i++) {
+                await supabaseAttractions
+                    .from('package_reservations')
+                    .delete()
+                    .eq('id', items[i].id)
+            }
+
+            alert('✅ Registros consolidados correctamente')
+            await loadData()
+        } catch (e) {
+            console.error('Error consolidating:', e)
+            alert('Error al consolidar registros')
+        }
+    }
+
+    // Actualizar cantidad de personas en un registro
+    const updateNumPeople = async (id: string, packageType: string, newNumPeople: number) => {
+        const pkg = packages.find(p => p.package_type === packageType)
+        if (!pkg) return
+
+        const newTotal = pkg.price * newNumPeople
+
+        try {
+            const { error } = await supabaseAttractions
+                .from('package_reservations')
+                .update({
+                    num_people: newNumPeople,
+                    total_amount: newTotal
+                })
+                .eq('id', id)
+
+            if (error) throw error
+            await loadData()
+        } catch (e) {
+            console.error('Error updating:', e)
+            alert('Error al actualizar')
         }
     }
 
@@ -517,80 +586,135 @@ export default function PaquetesAdminPage() {
                                             key={item.packageType}
                                             style={{
                                                 display: 'flex',
-                                                justifyContent: 'space-between',
-                                                alignItems: 'center',
+                                                flexDirection: 'column',
                                                 padding: '0.6rem 0.75rem',
                                                 marginBottom: '0.5rem',
-                                                background: '#f8fafc',
+                                                background: item.originalItems.length > 1 ? '#fffbeb' : '#f8fafc',
                                                 borderRadius: '8px',
                                                 borderLeft: `3px solid ${getPackageColor(item.packageType)}`
                                             }}
                                         >
-                                            <div style={{ flex: 1 }}>
-                                                <div style={{
-                                                    fontWeight: '600',
-                                                    color: getPackageColor(item.packageType),
-                                                    fontSize: '0.85rem'
-                                                }}>
-                                                    {getPackageName(item.packageType)}
-                                                </div>
-                                                <div style={{
-                                                    fontSize: '0.75rem',
-                                                    color: '#64748b',
-                                                    marginTop: '0.2rem'
-                                                }}>
-                                                    {item.numPeople} persona{item.numPeople !== 1 ? 's' : ''}
-                                                </div>
-                                            </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <div style={{ fontWeight: '700', color: '#1e293b' }}>
-                                                    ${formatMoney(item.totalAmount)}
-                                                </div>
-                                                {item.amountPaid > 0 && (
-                                                    <div style={{ fontSize: '0.7rem', color: '#22c55e' }}>
-                                                        Pagado: ${formatMoney(item.amountPaid)}
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{
+                                                        fontWeight: '600',
+                                                        color: getPackageColor(item.packageType),
+                                                        fontSize: '0.85rem'
+                                                    }}>
+                                                        {getPackageName(item.packageType)}
                                                     </div>
-                                                )}
+                                                    <div style={{
+                                                        fontSize: '0.75rem',
+                                                        color: '#64748b',
+                                                        marginTop: '0.2rem',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.5rem'
+                                                    }}>
+                                                        {item.numPeople} persona{item.numPeople !== 1 ? 's' : ''}
+                                                        {item.originalItems.length > 1 && (
+                                                            <span style={{
+                                                                color: '#f59e0b',
+                                                                fontWeight: '600',
+                                                                background: '#fef3c7',
+                                                                padding: '2px 6px',
+                                                                borderRadius: '4px',
+                                                                fontSize: '0.7rem'
+                                                            }}>
+                                                                ⚠️ {item.originalItems.length} registros
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <div style={{ fontWeight: '700', color: '#1e293b' }}>
+                                                        ${formatMoney(item.totalAmount)}
+                                                    </div>
+                                                    {item.amountPaid > 0 && (
+                                                        <div style={{ fontSize: '0.7rem', color: '#22c55e' }}>
+                                                            Pagado: ${formatMoney(item.amountPaid)}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '0.25rem', marginLeft: '0.5rem' }}>
+                                                    {/* Botón Editar */}
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedConsolidatedItem(item)
+                                                            setShowEditModal(true)
+                                                        }}
+                                                        style={{
+                                                            padding: '0.4rem 0.5rem',
+                                                            background: '#f0f9ff',
+                                                            color: '#0369a1',
+                                                            border: 'none',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.7rem',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        title="Editar registros"
+                                                    >
+                                                        ✏️
+                                                    </button>
+                                                    {/* Botón Consolidar (solo si hay más de 1 registro) */}
+                                                    {item.originalItems.length > 1 && (
+                                                        <button
+                                                            onClick={() => consolidateRecords(item.originalItems)}
+                                                            style={{
+                                                                padding: '0.4rem 0.5rem',
+                                                                background: '#fef3c7',
+                                                                color: '#b45309',
+                                                                border: 'none',
+                                                                borderRadius: '6px',
+                                                                fontSize: '0.7rem',
+                                                                fontWeight: '600',
+                                                                cursor: 'pointer'
+                                                            }}
+                                                            title="Consolidar registros duplicados en 1"
+                                                        >
+                                                            🔀
+                                                        </button>
+                                                    )}
+                                                    {/* Botón Pagar */}
+                                                    <button
+                                                        onClick={() => {
+                                                            if (item.originalItems.length > 0) {
+                                                                setSelectedReservation(item.originalItems[0])
+                                                                setShowPaymentModal(true)
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            padding: '0.4rem 0.6rem',
+                                                            background: '#3b82f6',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.7rem',
+                                                            fontWeight: '600',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        title="Registrar pago"
+                                                    >
+                                                        Pagar
+                                                    </button>
+                                                    {/* Botón Eliminar */}
+                                                    <button
+                                                        onClick={() => deleteReservation(item.originalItems[0].id)}
+                                                        style={{
+                                                            padding: '0.4rem 0.5rem',
+                                                            background: '#fee2e2',
+                                                            color: '#dc2626',
+                                                            border: 'none',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.7rem',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        title="Eliminar"
+                                                    >
+                                                        X
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <button
-                                                onClick={() => {
-                                                    // Seleccionar el primer item original para pago
-                                                    if (item.originalItems.length > 0) {
-                                                        setSelectedReservation(item.originalItems[0])
-                                                        setShowPaymentModal(true)
-                                                    }
-                                                }}
-                                                style={{
-                                                    marginLeft: '0.5rem',
-                                                    padding: '0.4rem 0.6rem',
-                                                    background: '#3b82f6',
-                                                    color: 'white',
-                                                    border: 'none',
-                                                    borderRadius: '6px',
-                                                    fontSize: '0.7rem',
-                                                    fontWeight: '600',
-                                                    cursor: 'pointer'
-                                                }}
-                                                title="Registrar pago"
-                                            >
-                                                Pagar
-                                            </button>
-                                            <button
-                                                onClick={() => deleteReservation(item.originalItems[0].id)}
-                                                style={{
-                                                    marginLeft: '0.25rem',
-                                                    padding: '0.4rem 0.5rem',
-                                                    background: '#fee2e2',
-                                                    color: '#dc2626',
-                                                    border: 'none',
-                                                    borderRadius: '6px',
-                                                    fontSize: '0.7rem',
-                                                    cursor: 'pointer'
-                                                }}
-                                                title="Eliminar"
-                                            >
-                                                X
-                                            </button>
                                         </div>
                                     ))}
 
@@ -662,6 +786,15 @@ export default function PaquetesAdminPage() {
                 <PaymentModal
                     packageReservation={selectedReservation}
                     onClose={() => { setShowPaymentModal(false); setSelectedReservation(null); loadData(); }}
+                />
+            )}
+            {showEditModal && selectedConsolidatedItem && (
+                <EditPackageModal
+                    consolidatedItem={selectedConsolidatedItem}
+                    packages={packages}
+                    onClose={() => { setShowEditModal(false); setSelectedConsolidatedItem(null); loadData(); }}
+                    onDelete={deleteReservation}
+                    onUpdateNumPeople={updateNumPeople}
                 />
             )}
         </div>
@@ -1379,6 +1512,321 @@ function PaymentModal({ packageReservation, onClose }: { packageReservation: Pac
                             {isLoading ? 'Registrando...' : 'Registrar Pago'}
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+// Modal Component for editing package records
+function EditPackageModal({
+    consolidatedItem,
+    packages,
+    onClose,
+    onDelete,
+    onUpdateNumPeople
+}: {
+    consolidatedItem: ConsolidatedItem
+    packages: AttractionPackage[]
+    onClose: () => void
+    onDelete: (id: string) => Promise<void>
+    onUpdateNumPeople: (id: string, packageType: string, newNumPeople: number) => Promise<void>
+}) {
+    const [editingId, setEditingId] = useState<string | null>(null)
+    const [editValue, setEditValue] = useState<number>(1)
+
+    const getPackageName = (packageType: string) => {
+        const names: Record<string, string> = {
+            museos: 'Museos',
+            acuario_adultos: 'Acuario + Museos (Adultos)',
+            acuario_ninos: 'Acuario + Museos (Niños)'
+        }
+        return names[packageType] || packageType
+    }
+
+    const getPackagePrice = (packageType: string) => {
+        const pkg = packages.find(p => p.package_type === packageType)
+        return pkg?.price || 0
+    }
+
+    const formatMoney = (amount: number) => {
+        return amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    }
+
+    const handleSaveEdit = async (id: string, packageType: string) => {
+        if (editValue > 0) {
+            await onUpdateNumPeople(id, packageType, editValue)
+            setEditingId(null)
+        }
+    }
+
+    return (
+        <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 100,
+            padding: '1rem'
+        }}>
+            <div style={{
+                background: 'white',
+                borderRadius: '16px',
+                width: '100%',
+                maxWidth: '500px',
+                maxHeight: '80vh',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column'
+            }}>
+                {/* Header */}
+                <div style={{
+                    padding: '1.25rem',
+                    borderBottom: '1px solid #e5e7eb',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <div>
+                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>
+                            ✏️ Editar Registros
+                        </h3>
+                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                            {getPackageName(consolidatedItem.packageType)}
+                        </p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        style={{
+                            background: 'none',
+                            border: 'none',
+                            fontSize: '1.5rem',
+                            cursor: 'pointer',
+                            color: '#94a3b8'
+                        }}
+                    >
+                        ×
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div style={{ padding: '1.25rem', overflowY: 'auto', flex: 1 }}>
+                    {consolidatedItem.originalItems.length > 1 && (
+                        <div style={{
+                            background: '#fffbeb',
+                            border: '1px solid #fbbf24',
+                            borderRadius: '8px',
+                            padding: '0.75rem',
+                            marginBottom: '1rem',
+                            fontSize: '0.85rem',
+                            color: '#92400e'
+                        }}>
+                            ⚠️ Este paquete tiene <strong>{consolidatedItem.originalItems.length} registros</strong> separados.
+                            Usa el botón "🔀" para consolidarlos en 1.
+                        </div>
+                    )}
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {consolidatedItem.originalItems.map((item, index) => (
+                            <div
+                                key={item.id}
+                                style={{
+                                    background: '#f8fafc',
+                                    borderRadius: '8px',
+                                    padding: '0.75rem',
+                                    border: '1px solid #e2e8f0'
+                                }}
+                            >
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    marginBottom: '0.5rem'
+                                }}>
+                                    <span style={{
+                                        fontSize: '0.75rem',
+                                        color: '#94a3b8',
+                                        fontWeight: '600'
+                                    }}>
+                                        Registro #{index + 1}
+                                    </span>
+                                    <span style={{
+                                        fontSize: '0.7rem',
+                                        color: '#94a3b8',
+                                        fontFamily: 'monospace'
+                                    }}>
+                                        ID: {item.id.slice(0, 8)}...
+                                    </span>
+                                </div>
+
+                                <div style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center'
+                                }}>
+                                    <div>
+                                        {editingId === item.id ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={editValue}
+                                                    onChange={(e) => setEditValue(parseInt(e.target.value) || 1)}
+                                                    style={{
+                                                        width: '60px',
+                                                        padding: '0.4rem',
+                                                        border: '1px solid #d1d5db',
+                                                        borderRadius: '6px',
+                                                        fontSize: '0.9rem'
+                                                    }}
+                                                />
+                                                <span style={{ fontSize: '0.85rem', color: '#64748b' }}>personas</span>
+                                                <button
+                                                    onClick={() => handleSaveEdit(item.id, item.package_type)}
+                                                    style={{
+                                                        padding: '0.3rem 0.6rem',
+                                                        background: '#10b981',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        borderRadius: '4px',
+                                                        fontSize: '0.75rem',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    ✓
+                                                </button>
+                                                <button
+                                                    onClick={() => setEditingId(null)}
+                                                    style={{
+                                                        padding: '0.3rem 0.6rem',
+                                                        background: '#f1f5f9',
+                                                        color: '#64748b',
+                                                        border: 'none',
+                                                        borderRadius: '4px',
+                                                        fontSize: '0.75rem',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <div style={{ fontWeight: '600', fontSize: '0.95rem', color: '#1e293b' }}>
+                                                    {item.num_people} persona{item.num_people !== 1 ? 's' : ''}
+                                                </div>
+                                                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                                    ${formatMoney(item.total_amount)}
+                                                    {item.amount_paid > 0 && (
+                                                        <span style={{ color: '#22c55e', marginLeft: '0.5rem' }}>
+                                                            (Pagado: ${formatMoney(item.amount_paid)})
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {editingId !== item.id && (
+                                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                            <button
+                                                onClick={() => {
+                                                    setEditingId(item.id)
+                                                    setEditValue(item.num_people)
+                                                }}
+                                                style={{
+                                                    padding: '0.4rem 0.6rem',
+                                                    background: '#f0f9ff',
+                                                    color: '#0369a1',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.75rem',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Editar cantidad"
+                                            >
+                                                ✏️ Editar
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('¿Eliminar este registro?')) {
+                                                        onDelete(item.id)
+                                                    }
+                                                }}
+                                                style={{
+                                                    padding: '0.4rem 0.6rem',
+                                                    background: '#fee2e2',
+                                                    color: '#dc2626',
+                                                    border: 'none',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.75rem',
+                                                    cursor: 'pointer'
+                                                }}
+                                                title="Eliminar registro"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Summary */}
+                    <div style={{
+                        marginTop: '1rem',
+                        padding: '0.75rem',
+                        background: '#f1f5f9',
+                        borderRadius: '8px',
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr 1fr',
+                        gap: '0.5rem',
+                        textAlign: 'center'
+                    }}>
+                        <div>
+                            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Total Personas</div>
+                            <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#1e293b' }}>
+                                {consolidatedItem.numPeople}
+                            </div>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Monto Total</div>
+                            <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#1e293b' }}>
+                                ${formatMoney(consolidatedItem.totalAmount)}
+                            </div>
+                        </div>
+                        <div>
+                            <div style={{ fontSize: '0.7rem', color: '#64748b' }}>Pagado</div>
+                            <div style={{ fontWeight: '700', fontSize: '1.1rem', color: '#22c55e' }}>
+                                ${formatMoney(consolidatedItem.amountPaid)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div style={{
+                    padding: '1rem 1.25rem',
+                    borderTop: '1px solid #e5e7eb'
+                }}>
+                    <button
+                        onClick={onClose}
+                        style={{
+                            width: '100%',
+                            padding: '0.75rem',
+                            background: '#f1f5f9',
+                            color: '#64748b',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontWeight: '600',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Cerrar
+                    </button>
                 </div>
             </div>
         </div>
