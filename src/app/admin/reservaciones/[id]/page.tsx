@@ -327,6 +327,66 @@ export default function ReservacionDetailPage() {
         }
     }
 
+    const handleDeletePassenger = async (passengerId: string, passengerName: string, isFreeUnder6: boolean) => {
+        if (!reservation) return
+
+        if (passengers.length <= 1) {
+            alert('No puedes eliminar el único pasajero. Si deseas cancelar la reservación, usa la opción de cambiar estatus.')
+            return
+        }
+
+        const confirmed = confirm(`¿Estás seguro de eliminar a "${passengerName}" de esta reservación?`)
+        if (!confirmed) return
+
+        try {
+            // Eliminar pasajero
+            const { error: deleteError } = await supabase
+                .from('reservation_passengers')
+                .delete()
+                .eq('id', passengerId)
+
+            if (deleteError) throw deleteError
+
+            // Calcular pasajeros restantes
+            const remainingPassengers = passengers.filter(p => p.id !== passengerId)
+            const PRICE_PER_SEAT = 1800
+
+            // Recalcular totales basado en pasajeros restantes
+            const newSeatsTotal = remainingPassengers.length
+            const newSeatsPayable = remainingPassengers.filter(p => !p.is_free_under6).length
+            const newTotalAmount = newSeatsPayable * PRICE_PER_SEAT
+            const newDepositRequired = Math.ceil(newTotalAmount * 0.5)
+
+            // Actualizar reservación
+            const { error: updateError } = await supabase
+                .from('reservations')
+                .update({
+                    seats_total: newSeatsTotal,
+                    seats_payable: newSeatsPayable,
+                    total_amount: newTotalAmount,
+                    deposit_required: newDepositRequired
+                })
+                .eq('id', reservation.id)
+
+            if (updateError) throw updateError
+
+            // Actualizar estado local
+            setPassengers(remainingPassengers)
+            setReservation({
+                ...reservation,
+                seats_total: newSeatsTotal,
+                seats_payable: newSeatsPayable,
+                total_amount: newTotalAmount,
+                deposit_required: newDepositRequired
+            })
+
+            alert(`${passengerName} ha sido eliminado de la reservación`)
+        } catch (err) {
+            console.error(err)
+            alert('Error al eliminar pasajero')
+        }
+    }
+
     const getStatusLabel = (status: string) => {
         const labels: Record<string, string> = {
             pendiente: 'Pendiente',
@@ -689,6 +749,29 @@ Tu reservación está 100% confirmada para el viaje a Betel del 7-9 de abril de 
                                                     Gratis
                                                 </span>
                                             )}
+                                            <button
+                                                onClick={() => handleDeletePassenger(passenger.id, `${passenger.first_name} ${passenger.last_name}`, passenger.is_free_under6)}
+                                                style={{
+                                                    background: '#fee2e2',
+                                                    color: '#dc2626',
+                                                    border: 'none',
+                                                    padding: '0.25rem 0.5rem',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.25rem'
+                                                }}
+                                                title="Eliminar pasajero"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                </svg>
+                                                Eliminar
+                                            </button>
                                         </div>
                                     </div>
 

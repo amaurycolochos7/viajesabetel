@@ -25,6 +25,7 @@ function ReservacionesContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [reservations, setReservations] = useState<Reservation[]>([])
+    const [passengerCounts, setPassengerCounts] = useState<Map<string, number>>(new Map())
     const [isLoading, setIsLoading] = useState(true)
     const [filter, setFilter] = useState<FilterStatus>('all')
     const [userEmail, setUserEmail] = useState('')
@@ -72,6 +73,90 @@ function ReservacionesContent() {
             console.error(error)
         } else {
             setReservations(data as Reservation[])
+
+            // Obtener todos los pasajeros con su info completa incluyendo edad
+            const { data: passengers } = await supabase
+                .from('reservation_passengers')
+                .select('id, reservation_id, is_free_under6, age')
+
+            if (passengers) {
+                // Primero corregir pasajeros con is_free_under6 incorrecto
+                for (const p of passengers) {
+                    const shouldBeFree = p.age !== null && p.age < 6
+                    if (p.is_free_under6 !== shouldBeFree) {
+                        console.log(`Corrigiendo pasajero ${p.id}: is_free_under6 ${p.is_free_under6} -> ${shouldBeFree} (edad: ${p.age})`)
+                        await supabase
+                            .from('reservation_passengers')
+                            .update({ is_free_under6: shouldBeFree })
+                            .eq('id', p.id)
+                    }
+                }
+
+                // Recalcular conteos con datos corregidos
+                const counts = new Map<string, number>()
+                const payableCounts = new Map<string, number>()
+
+                passengers.forEach(p => {
+                    const current = counts.get(p.reservation_id) || 0
+                    counts.set(p.reservation_id, current + 1)
+
+                    // Usar edad para determinar si paga (más confiable)
+                    const isFree = p.age !== null && p.age < 6
+                    if (!isFree) {
+                        const payable = payableCounts.get(p.reservation_id) || 0
+                        payableCounts.set(p.reservation_id, payable + 1)
+                    }
+                })
+                setPassengerCounts(counts)
+
+                const PRICE_PER_SEAT = 1800
+
+                // Sincronizar reservaciones con datos incorrectos
+                for (const reservation of (data as Reservation[])) {
+                    const realTotal = counts.get(reservation.id) || 0
+                    const realPayable = payableCounts.get(reservation.id) || 0
+                    const correctTotalAmount = realPayable * PRICE_PER_SEAT
+                    const correctDeposit = Math.ceil(correctTotalAmount * 0.5)
+
+                    // Determinar status correcto basado en pagos
+                    let correctStatus = reservation.status
+                    if (reservation.status !== 'cancelado') {
+                        if (reservation.amount_paid >= correctTotalAmount && correctTotalAmount > 0) {
+                            correctStatus = 'pagado_completo'
+                        } else if (reservation.amount_paid >= correctDeposit && correctDeposit > 0) {
+                            correctStatus = 'anticipo_pagado'
+                        } else {
+                            correctStatus = 'pendiente'
+                        }
+                    }
+
+                    // Verificar si hay discrepancias
+                    const needsUpdate = realTotal > 0 && (
+                        reservation.seats_total !== realTotal ||
+                        reservation.seats_payable !== realPayable ||
+                        reservation.total_amount !== correctTotalAmount ||
+                        (reservation.status !== 'cancelado' && reservation.status !== correctStatus)
+                    )
+
+                    if (needsUpdate) {
+                        console.log(`Corrigiendo ${reservation.reservation_code}: seats_total=${realTotal}, seats_payable=${realPayable}, total=$${correctTotalAmount}, status=${correctStatus}`)
+
+                        supabase
+                            .from('reservations')
+                            .update({
+                                seats_total: realTotal,
+                                seats_payable: realPayable,
+                                total_amount: correctTotalAmount,
+                                deposit_required: correctDeposit,
+                                status: correctStatus
+                            })
+                            .eq('id', reservation.id)
+                            .then(() => {
+                                console.log(`✓ Sincronizado ${reservation.reservation_code}`)
+                            })
+                    }
+                }
+            }
         }
         setIsLoading(false)
     }
@@ -303,7 +388,7 @@ function ReservacionesContent() {
                                         <div>
                                             <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase' }}>Lugares</div>
                                             <div style={{ fontSize: '0.95rem', color: '#334155', fontWeight: '600' }}>
-                                                {r.seats_payable} <span style={{ color: '#cbd5e1', fontSize: '0.8em' }}>/ {r.seats_total}</span>
+                                                {r.seats_payable} <span style={{ color: '#cbd5e1', fontSize: '0.8em' }}>/ {passengerCounts.get(r.id) || r.seats_total}</span>
                                             </div>
                                         </div>
                                         <div>

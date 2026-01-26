@@ -63,8 +63,20 @@ export default function AdminDashboard() {
 
         const reservationsData = reservations as Reservation[]
 
+        // Obtener conteo real de pasajeros
+        const { data: passengers } = await supabase
+            .from('reservation_passengers')
+            .select('reservation_id')
+
+        const passengerCounts = new Map<string, number>()
+        passengers?.forEach(p => {
+            const current = passengerCounts.get(p.reservation_id) || 0
+            passengerCounts.set(p.reservation_id, current + 1)
+        })
+
         const totalReservations = reservationsData.length
-        const totalSeats = reservationsData.reduce((sum, r) => sum + r.seats_total, 0)
+        // LUGARES TOTALES = asientos ocupados (seats_payable), no incluye niños menores de 6 que van en brazos
+        const totalSeats = reservationsData.reduce((sum, r) => sum + r.seats_payable, 0)
 
         // Filter out host reservations for financial stats
         const payableReservations = reservationsData.filter(r => !r.is_host)
@@ -85,7 +97,12 @@ export default function AdminDashboard() {
             pendingDeposits,
         })
 
-        setRecentReservations(reservationsData.slice(0, 10))
+        // Agregar conteo real a cada reservación para mostrar en lista
+        const recentWithCounts = reservationsData.slice(0, 10).map(r => ({
+            ...r,
+            seats_total: passengerCounts.get(r.id) || r.seats_total
+        }))
+        setRecentReservations(recentWithCounts)
         setIsLoading(false)
     }
 
@@ -182,7 +199,7 @@ export default function AdminDashboard() {
                             <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '600', marginTop: '0.25rem' }}>RESERVACIONES</div>
                         </Link>
                         <Link
-                            href="/admin/reservaciones"
+                            href="/admin/pasajeros"
                             style={{ background: 'white', padding: '1.25rem', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', textDecoration: 'none', cursor: 'pointer', transition: 'transform 0.2s, box-shadow 0.2s' }}
                         >
                             <div style={{ fontSize: '2rem', fontWeight: '800', color: '#2c3e50', lineHeight: 1 }}>{stats.totalSeats}</div>
